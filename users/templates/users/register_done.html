@@ -1,0 +1,11 @@
+<!-- choocha\users\templates\users\register_done.html -->
+{% extends 'base.html' %}
+{% block canonical_url %}
+    <link rel="canonical" href="{% url 'home' %}" />
+{% endblock %}
+{% block content %}
+<h1>Добро пожаловать!</h1>
+ 
+<p >Вы успешно зарегистрировались на сайте! Для входа в систему необходимо авторизоваться по этой <a href="{% url 'users:login' %}">ссылке</a>
+</p>
+{% endblock %}

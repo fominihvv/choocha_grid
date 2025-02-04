@@ -1,0 +1,33 @@
+<!-- choocha\users\templates\users\profile.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% block canonical_url %}
+    <link rel="canonical" href="{% url 'home' %}"/>
+{% endblock %}
+{% block content %}
+
+    <h1> Профиль </h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if user.photo %}
+            <p><img src="{{ user.photo.url }}" width="200" height="200" alt="Фотография пользователя"></p>
+        {% else %}
+            <p><img src="{% get_media_prefix %}/users/default.png" width="200" height="200" alt="Фотографии нет"></p>
+        {% endif %}
+        <div class="form-error">{{ form.non_field_errors }}</div>
+        {% for field in form %}
+            <div class="form-label">
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+            </div>
+            <div class="form-error">{{ field.errors }}</div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+
+    </form>
+    {% if not perms.users.social_auth %}
+        <hr>
+        <p><a href="{% url 'users:password_change' %}">Изменить пароль</a></p>
+    {% endif %}
+
+{% endblock %}

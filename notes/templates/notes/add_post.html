@@ -1,0 +1,20 @@
+<!-- choocha\notes\templates\choocha\add_post.html -->
+{% extends 'base.html' %}
+
+{% block canonical_url %}
+    <link rel="canonical" href="{% url 'add_post' %}"/>
+{% endblock %}
+
+{% block content %}
+    <h1> {{ title }} </h1>
+
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-error">{{ form.non_field_errors }}</div>
+        {{ form.media }}
+        {{ form.as_p }}
+        <div class="d-grid gap-2 d-md-block mt-2">
+            <button type="submit" class="btn btn-dark">Добавить статью</button>
+        </div>
+    </form>
+{% endblock %}

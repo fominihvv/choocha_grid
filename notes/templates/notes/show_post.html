@@ -1,0 +1,45 @@
+<!-- choocha\notes\templates\notes\show_post.html -->
+{% extends 'base.html' %}
+{% block canonical_url %}
+    <link rel="canonical" href="{% url 'post' post.slug %}"/>
+{% endblock %}
+{% block breadcrumbs %}
+    <!--- Метки --->
+    {% with post.tags.all as tags %}
+        {% if tags %}
+            <ul class="tags-list">
+                {% for tag in tags %}
+                    <li><a href="{{ tag.get_absolute_url }}">{{ tag.tag }}</a></li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <div class="actions">
+        {% if perms.notes.change_note %}
+            <a href="{{ post.get_update_url }}">Изменить статью</a>
+        {% endif %}
+        <br>
+        {% if perms.notes.delete_note %}
+            <a href="{{ post.get_delete_url }}">Удалить статью</a>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="article">
+        <h1> {{ title }} </h1>
+        {% autoescape off %}
+            <div class="ck-content">
+                {{ post.content_full|safe }}
+            </div>
+        {% endautoescape %}
+        <div class="clear"></div>
+        <div class="article-panel">
+            <p class="first">Категория: {{ post.cat.name }} |
+                автор: {{ post.author.username|default:"Автор не известен" }}</p>
+            <p class="last">Дата: {{ post.time_update|date:"d-m-Y H:i" }}</p>
+        </div>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,17 @@
+<!-- choocha\notes\templates\notes\delete_post.html -->
+{% extends 'base.html' %}
+{% block canonical_url %}
+    <link rel="canonical" href="{% url 'delete_post' post.pk %}"/>
+{% endblock %}
+{% block content %}
+    <h1> {{ title }} </h1>
+
+    <form action="" method="post">
+        {% csrf_token %}
+
+        <p>Вы действительно хотите удалить пост "{{ post.title }}"?</p>
+        <button type="submit">Удалить</button>
+        <a href="{{ post.get_absolute_url }}">Отмена</a>
+
+    </form>
+{% endblock %}

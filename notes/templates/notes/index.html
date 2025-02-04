@@ -1,0 +1,65 @@
+<!-- choocha\notes\templates\notes\index.html -->
+{% extends 'base.html' %}
+
+{% block canonical_url %}
+    <link rel="canonical" href="{% url 'home' %}"/>
+{% endblock %}
+
+{% block content %}
+    <ul class="list-articles">
+        {% for post in posts %}
+            <li class="article">
+                <div class="article-panel">
+                    <p class="first">Категория: {{ post.cat.name }} |
+                        автор: {{ post.author.username|default:"Автор не известен" }}</p>
+                    <p class="last">Дата: {{ post.time_update|date:"d-m-Y H:i" }}</p>
+                </div>
+                {% if post.image %}
+                    <div class="article-image">
+                        <img src="{{ post.image.url }}" alt="{{ post.title }}">
+                    </div>
+                {% endif %}
+                <h2 class="article-title"><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
+                <div class="article-content">
+                    {% autoescape off %}
+                        <div class="ck-content">
+                            {{ post.content_short|safe }}
+                        </div>
+                    {% endautoescape %}
+                </div>
+                <div class="clear"></div>
+                <p class="link-read-post"><a href="{{ post.get_absolute_url }}">Читать далее</a></p>
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}
+
+{% block navigation %}
+    {% if page_obj.has_other_pages %}
+        <nav class="list-pages">
+            <ul>
+                {% if page_obj.has_previous %}
+                    <li class="page-num">
+                        <a href="?page={{ page_obj.previous_page_number }}">&lt;</a>
+                    </li>
+                {% endif %}
+
+                {% for page_num in page_range %}
+                    {% if page_obj.number == page_num or page_num == paginator.ELLIPSIS %}
+                        <li class="page-num page-num-selected">{{ page_num }}</li>
+                    {% else %}
+                        <li class="page-num">
+                            <a href="?page={{ page_num }}">{{ page_num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-num">
+                        <a href="?page={{ page_obj.next_page_number }}">&gt;</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+{% endblock %}

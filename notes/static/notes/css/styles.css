@@ -1,0 +1,417 @@
+/* Основные стили */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.header {
+    background: #333;
+    color: #fff;
+    padding: 10px 0;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px; /* Отступы по бокам */
+}
+
+.logo .logo-img {
+    width: 50px;
+    height: 50px;
+    /*background: url('{% static 'notes/images/logo.png' %}') no-repeat center;*/
+    background-size: contain;
+}
+
+.mainmenu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+.mainmenu ul li {
+    margin-left: 20px;
+}
+
+.mainmenu ul li a {
+    color: #fff;
+    text-decoration: none;
+}
+
+.main-content {
+    display: flex;
+    flex: 1;
+/*    padding: 20px; /* Отступы по бокам */
+    gap: 10px
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100vh; /* Высота боковой панели будет равна высоте окна браузера */
+}
+
+.leftchapters {
+    flex-shrink: 0; /* Элементы списка категорий и раздел "Наш канал" останутся вверху */
+}
+
+.leftchapters > ul > li {
+    margin-top: 30px;
+    color: #999;
+}
+
+.leftchapters > ul > li.selected {
+    color: #0059b2;
+}
+
+.leftchapters > ul > li > a {
+    color: #444;
+    text-decoration: none;
+}
+
+.leftchapters > ul > li > a:hover {
+    color: #CC0000;
+}
+
+.share {
+    margin-top: 60px;
+}
+
+.share > p {
+    margin: 30px 0;
+}
+
+.share > a {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    margin: 0 20px 0 0;
+}
+
+.share-yt {
+    width: 100%;
+    height: 30px;
+    background: url('../images/share_yt.png') no-repeat 0 0;
+}
+
+.share-yt:hover {
+    background-position: 0 -30px;
+}
+.content {
+    flex: 1;
+    margin-top: 6px; /* Добавляем отступ от шапки */
+}
+
+.footer {
+    background: #333;
+    color: #fff;
+    text-align: center;
+    padding: 10px 0;
+    margin-top: auto;
+}
+
+
+/* Основные стили для списка статей */
+.list-articles {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.article {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.article-panel {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.article-panel .first,
+.article-panel .last {
+    margin: 0;
+}
+
+.article-image {
+    margin-bottom: 15px;
+}
+
+.article-image img {
+    max-width: 300px;
+    height: auto;
+    border-radius: 8px;
+    float: left;
+    padding: 0 10px 10px 0;
+}
+
+.article-title {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.article-title a {
+    color: #333;
+    text-decoration: none;
+}
+
+.article-title a:hover {
+    color: #007bff;
+}
+
+.article-content {
+    margin-bottom: 20px; /* Отступ снизу */
+    padding: 15px; /* Внутренние отступы */
+    background: #fff; /* Фон */
+    border: 1px solid #ddd; /* Граница */
+    border-radius: 8px; /* Скругление углов */
+    overflow: hidden; /* Скрывает содержимое, выходящее за пределы блока */
+}
+
+.link-read-post {
+    text-align: right;
+}
+
+.link-read-post a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.link-read-post a:hover {
+    text-decoration: underline;
+}
+
+/* Стили для пагинации */
+.list-pages {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.list-pages ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: inline-flex;
+    gap: 10px;
+}
+
+.list-pages .page-num {
+    display: inline-block;
+}
+
+.list-pages .page-num a,
+.list-pages .page-num-selected {
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #333;
+}
+
+.list-pages .page-num a:hover {
+    background: #f8f9fa;
+}
+
+.list-pages .page-num-selected {
+    background: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+
+
+/* Общий контейнер для категорий и тегов */
+.scrollable-sidebar {
+    height: 80vh; /* Ограничиваем высоту контейнера */
+    overflow-y: auto; /* Включаем вертикальную прокрутку */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Категории */
+.categories {
+    position: sticky;
+    top: 0;
+/*    margin-top: 10px;
+    margin-bottom: 20px; */
+    padding: 10px;
+}
+
+.categories p {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.categories-container {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+.categories-container ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.categories-container ul li {
+    margin-bottom: 10px;
+}
+
+.categories-container ul li a {
+    text-decoration: none;
+    color: #333;
+}
+
+.categories-container ul li a:hover {
+    color: #007bff;
+}
+
+.categories-container ul li.selected {
+    font-weight: bold;
+    color: #007bff;
+}
+
+
+/* Теги */
+.tags {
+    position: sticky;
+    bottom: 0;
+    margin-top: 20px;
+    padding: 10px;
+}
+
+.tags p {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.tags-container {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    word-wrap: break-word;
+    white-space: normal;
+    max-width: 200px; /* Ограничиваем максимальную ширину контейнера с тегами */
+}
+
+.tags-container span {
+    display: inline-block;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.tags-container span:hover {
+    color: #007bff;
+}
+/* Стили для списка тегов */
+.tags-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.tags-list li {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px 10px;
+}
+
+.tags-list li a {
+    text-decoration: none;
+    color: #333;
+}
+
+.tags-list li a:hover {
+    color: #007bff;
+}
+
+.ck-content {
+    overflow: hidden; /* Скрывает содержимое, выходящее за пределы блока */
+    padding-bottom: 20px; /* Добавляет отступ снизу */
+}
+
+.ck-content img {
+    max-width: 100%; /* Ограничивает ширину картинки */
+    max-height: 100%; /* Ограничивает высоту картинки */
+    height: auto; /* Сохраняет пропорции */
+    object-fit: cover; /* Обрезает картинку, чтобы она не выходила за пределы */
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.actions > * + * {
+    margin-left: 10px; /* Разделяет ссылки небольшим промежутком */
+}
+
+
+@media (max-width: 768px) {
+    .main-content {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .article-panel {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .article-panel .first,
+    .article-panel .last {
+        margin-bottom: 5px;
+    }
+
+    .list-pages ul {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .list-pages .page-num {
+        margin-bottom: 5px;
+    }
+}
+
+@media (max-width: 768px) {
+    .tags-list {
+        gap: 5px; /* Уменьшаем отступ между тегами */
+    }
+
+    .tags-list li {
+        padding: 3px 8px; /* Уменьшаем отступы внутри тегов */
+        font-size: 14px; /* Уменьшаем размер шрифта */
+    }
+}

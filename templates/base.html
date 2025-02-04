@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    {% load static %}
+    {% load show_categories_and_tags %}
+    {% load analytical %}
+    {% analytical_head_top %}
+    <title>{{ title }}</title>
+    <link type="text/css" href="{% static 'notes/css/styles.css' %}" rel="stylesheet">
+    <link type="text/css" href="{% static 'notes/css/ckeditor5-content.css' %}" rel="stylesheet">
+    <link rel="shortcut icon" href="{% static 'notes/images/main.ico' %}" type="image/x-icon">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="{{ page_description_name }}" content="{{ page_description }}">
+    {% block canonical_url %}
+        <link rel="canonical" href="{% url '/' %}"/>
+    {% endblock %}
+    {% analytical_head_bottom %}
+</head>
+<body>
+{% analytical_body_top %}
+
+<!-- Основной контейнер -->
+<div class="container">
+    <!-- Шапка сайта -->
+    <header class="header">
+        {% block mainmenu %}
+            <div class="header-content">
+                <div class="logo">
+                    <a href="{% url 'home' %}">
+                        <div class="logo-img"></div>
+                    </a>
+                </div>
+                <nav class="mainmenu">
+                    <ul>
+                        {% for m in mainmenu %}
+                            {% if forloop.last %}
+                                <li class="last">
+                                    {% if m.url_name %}<a href="{% url m.url_name %}">{{ m.title }}</a>
+                                    {% else %}
+                                        {{ m.title }}
+                                    {% endif %} |
+                                    <a href="{% url m.url_name2 %}">{{ m.title2 }}</a>
+                                </li>
+                            {% else %}
+                                <li><a href="{% url m.url_name %}">{{ m.title }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </nav>
+                <div class="clear"></div>
+            </div>
+        {% endblock mainmenu %}
+    </header>
+
+    <!-- Основной контент -->
+    <main class="main-content">
+        <!-- Сайдбар -->
+        <aside class="sidebar">
+            <div class="scrollable-sidebar">
+                <section class="categories">
+                    <p>Категории</p> <!-- Заголовок -->
+                    <div class="categories-container">
+                        <ul>
+                            {% if cat_selected == 0 %}
+                                <li class="selected">Все категории</li>
+                            {% else %}
+                                <li><a href="{% url 'home' %}">Все категории</a></li>
+                            {% endif %}
+                            {% show_categories cat_selected %}
+                        </ul>
+                    </div>
+                </section>
+                <section class="tags">
+                    <p>Теги</p>
+                    <div class="tags-container">
+                        {% show_all_tags %}
+                    </div>
+                </section>
+            </div>
+        </aside>
+
+        <!-- Основной блок контента -->
+        <div class="content">
+            <!-- Хлебные крошки -->
+            {% block breadcrumbs %}
+            {% endblock %}
+
+            <!-- Блок контента -->
+            <div class="content-text">
+                {% block content %}
+                {% endblock %}
+            </div>
+
+            <!-- Навигация -->
+            {% block navigation %}
+            {% endblock %}
+        </div>
+    </main>
+
+    <!-- Подвал -->
+    <footer class="footer">
+        <p>&copy; 2023 Частичное или полное копирование информации с данного сайта для распространения на других
+            ресурсах, в том числе и бумажных, строго запрещено.</p>
+    </footer>
+</div>
+
+{% analytical_body_bottom %}
+</body>
+</html>

@@ -1,0 +1,19 @@
+<!-- choocha\users\templates\users\logout.html -->
+{% extends 'base.html' %}
+
+{% block canonical_url %}
+    <link rel="canonical" href="{% url 'home' %}"/>
+{% endblock %}
+{% block content %}
+
+    <h1>Завершение сеанса</h1>
+
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <p>
+            <button type="submit" value="Войти">Войти</button>
+        </p>
+    </form>
+
+{% endblock %}

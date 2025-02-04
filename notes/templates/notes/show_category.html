@@ -1,0 +1,29 @@
+<!-- choocha\notes\templates\notes\show_category.html -->
+{% extends 'base.html' %}
+{% block canonical_url %}
+    <link rel="canonical" href="{% url 'category' cat.slug %}"/>
+{% endblock %}
+{% block content %}
+    <ul class="list-articles">
+        {% for post in posts %}
+            <li>
+                <div class="article-panel">
+                    <p class="first"> Категория: {{ post.cat.name }} |
+                        автор: {{ post.author.username|default:"Автор не известен" }}</p>
+                    <p class="last"> Дата: {{ post.time_update|date:"d-m-Y H:i" }}</p>
+                </div>
+                {% if post.image %}
+                    <p><img class="img-article-left" src="{{ post.image.url }}" alt=""></p>
+                {% endif %}
+                <h2><a href={{ post.get_absolute_url }}>{{ post.title }}</a></h2>
+                {% autoescape off %}
+                    <div class="ck-content">
+                        {{ post.content_short|safe }}
+                    </div>
+                {% endautoescape %}
+                <div class="clear"></div>
+                <p class="link-read-post"><a href={{ post.get_absolute_url }}>Читать пост</a></p>
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}
