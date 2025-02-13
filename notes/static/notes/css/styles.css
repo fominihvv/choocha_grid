@@ -238,7 +238,7 @@ body {
 
 /* Общий контейнер для категорий и тегов */
 .scrollable-sidebar {
-    height: 80vh; /* Ограничиваем высоту контейнера */
+    /*height: 80vh; /* Ограничиваем высоту контейнера */
     overflow-y: auto; /* Включаем вертикальную прокрутку */
     display: flex;
     flex-direction: column;
@@ -372,6 +372,188 @@ body {
 }
 
 
+.content-error {
+    color: #231f20;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 0 50px;
+}
+
+.content-error__wrapper {
+    max-width: 650px;
+    padding: 0 10px;
+}
+
+.epic-error-img {
+    text-align: center;
+}
+
+.epic-error-code {
+    font-size: 100px;
+    color: #63B0F5;
+}
+
+.epic-error-text {
+    font-size: 38px;
+    font-weight: bold;
+}
+
+.epic-error-text p {
+    font-size: 24px;
+    padding-top: 10px;
+}
+
+.epic-link {
+    font-size: 18px;
+    line-height: 1.5;
+    margin-top: 20px;
+}
+
+.epic-link a {
+    color: #66cc66;
+    text-decoration: none;
+}
+
+/* Стили для формы */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* Отступ между элементами формы */
+}
+
+.form-field {
+    margin-bottom: 5px; /* Отступ между полями */
+}
+
+.form-label {
+    display: block; /* Метка занимает всю ширину */
+    font-weight: bold;
+    margin-bottom: 5px; /* Отступ между меткой и полем ввода */
+}
+
+
+form p {
+    display: flex;
+    align-items: center; /* Выравнивание по вертикали */
+    margin: 0; /* Убираем отступы у параграфов */
+}
+
+form input,
+form textarea {
+/*    flex: 1; /* Поля ввода занимают оставшееся пространство */
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1em;
+}
+
+form textarea {
+    resize: both; /* Разрешаем изменение высоты textarea по вертикали и горизонтали*/
+    width: 600px; 
+    height: 200px; 
+}
+
+button[type="submit"] {
+    align-self: flex-start; /* Кнопка выравнивается по левому краю */
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+}
+
+button[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+.form-error {
+    color: red;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+
+
+.button-like {
+    display: inline-block; /* Ссылка ведёт себя как блочный элемент */
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    text-decoration: none; /* Убираем подчёркивание */
+    text-align: center;
+    margin: 5px 2px; /* Отступы между кнопками */
+}
+
+.button-like:hover {
+    background-color: #0056b3;
+    text-decoration: none; /* Убираем подчёркивание при наведении */
+}
+
+/* Красная кнопка */
+.button-danger {
+    padding: 10px 20px;
+    background-color: #dc3545 !important; /* Красный цвет */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    text-decoration: none; /* Убираем подчёркивание */
+    text-align: center;
+    margin: 5px 2px; /* Отступы между кнопками */
+}
+
+.button-danger:hover {
+    background-color: #c82333 !important; /* Тёмно-красный при наведении */
+}
+
+/* Зелёная кнопка */
+.button-success {
+    align-self: flex-start;
+    padding: 10px 20px;
+    background-color: #28a745; /* Зелёный цвет */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    text-decoration: none; /* Убираем подчёркивание */
+    text-align: center;
+    margin: 5px 2px; /* Отступы между кнопками */
+}
+
+.button-success:hover {
+    background-color: #218838 !important; /* Тёмно-зелёный при наведении */
+}
+
+.hidden-field {
+    display: none;
+}
+
+.alert {
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.alert-success {
+    color: #3c763d;
+    background-color: #dff0d8;
+    border-color: #d6e9c6;
+}
+
+.alert-error {
+    color: #a94442;
+    background-color: #f2dede;
+    border-color: #ebccd1;
+}
+
 @media (max-width: 768px) {
     .main-content {
         flex-direction: column;
@@ -413,5 +595,21 @@ body {
     .tags-list li {
         padding: 3px 8px; /* Уменьшаем отступы внутри тегов */
         font-size: 14px; /* Уменьшаем размер шрифта */
+    }
+}
+
+@media (max-width: 600px) {
+    .button-like {
+        width: 100%; /* Кнопки занимают всю ширину */
+        box-sizing: border-box; /* Учитываем padding в ширине */
+    }
+}
+
+@media (max-width: 600px) {
+    .button-danger,
+    .button-success {
+        width: 100%; /* Кнопки занимают всю ширину */
+        box-sizing: border-box; /* Учитываем padding в ширине */
+        margin: 5px 0; /* Отступы между кнопками */
     }
 }

@@ -6,23 +6,26 @@
 {% endblock %}
 
 {% block content %}
+    <div class="article">
+        <h1>Авторизация</h1>
 
-    <h1>Авторизация</h1>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}"/>
+            <div class="form-error">{{ form.non_field_errors }}</div>
+            {% for field in form %}
+                <div class="form-field">
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label> {{ field }}
+                    <div class="form-error">{{ field.errors }}</div>
+                </div>
+            {% endfor %}
+            <button type="submit">Войти</button>
 
-    <form method="post">
-        {% csrf_token %}
-        <input type="hidden" name="next" value="{{ next }}"/>
-        <div class="form-error">{{ form.non_field_errors }}</div>
-        {% for field in form %}
-            <p><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}</p>
-            <div class="form-error">{{ field.errors }}</div>
-        {% endfor %}
-        <button type="submit">Войти</button>
+            <p><a href="{% url 'users:password_reset' %}">Восстановить пароль</a></p>
+        </form>
 
-        <p><a href="{% url 'users:password_reset' %}">Восстановить пароль</a></p>
-    </form>
-
-    <hr>
-    <p><a href="{% url 'social:begin' 'github' %}"><img src="/media/social-auth/github.png" alt="Login with GitHub"></a></p>
-
+        <hr>
+        <p><a href="{% url 'social:begin' 'github' %}"><img src="/media/social-auth/github.png" alt="Login with GitHub"></a>
+        </p>
+    </div>
 {% endblock %}

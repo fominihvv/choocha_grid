@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     {% load static %}
-    {% load show_categories_and_tags %}
+    {% load show_categories_tags_lastposts %}
     {% load analytical %}
     {% analytical_head_top %}
     <title>{{ title }}</title>
@@ -75,6 +75,12 @@
                     <p>Теги</p>
                     <div class="tags-container">
                         {% show_all_tags %}
+                    </div>
+                </section>
+                <section class="tags">
+                    <p>Последние записи</p>
+                    <div class="tags-container">
+                        {% show_last_posts %}
                     </div>
                 </section>
             </div>

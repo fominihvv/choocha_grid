@@ -6,11 +6,32 @@
 {% endblock %}
 
 {% block content %}
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    <!-- Скрипт для автоматического скрытия сообщений -->
+    <script>
+        // Скрыть сообщения через 5 секунд
+        setTimeout(function () {
+            var messages = document.querySelectorAll('.alert');
+            messages.forEach(function (message) {
+                message.style.display = 'none';
+            });
+        }, 5000);  // 5000 миллисекунд = 5 секунд
+    </script>
+    
     <ul class="list-articles">
         {% for post in posts %}
             <li class="article">
                 <div class="article-panel">
-                    <p class="first">Категория: {{ post.cat.name }} |
+                    <p class="first">Категория: <a href="{{ post.cat.get_absolute_url }}">{{ post.cat.name }}</a> |
                         автор: {{ post.author.username|default:"Автор не известен" }}</p>
                     <p class="last">Дата: {{ post.time_update|date:"d-m-Y H:i" }}</p>
                 </div>
@@ -63,3 +84,4 @@
         </nav>
     {% endif %}
 {% endblock %}
+

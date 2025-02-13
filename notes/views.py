@@ -1,14 +1,17 @@
 from typing import Any
 
 from bs4 import BeautifulSoup
+from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
+from django.core.mail import send_mail
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
-from django.views.generic import TemplateView, ListView, DetailView, CreateView, DeleteView, UpdateView
+from django.views.generic import TemplateView, ListView, DetailView, CreateView, DeleteView, UpdateView, FormView
 
-from .forms import AddPostForm, UpdatePostForm
+from choocha import settings
+from .forms import AddPostForm, UpdatePostForm, ContactForm
 from .models import Note, TagPost, Category
 from .utils import DataMixin
 
@@ -35,7 +38,7 @@ class ShowPost(DataMixin, DetailView):
     context_object_name = 'post'
 
     def get_queryset(self) -> QuerySet:
-        return Note.published.all()
+        return Note.published.all().select_related('cat', 'author')
 
     def get_object(self, queryset: QuerySet = None) -> QuerySet:
         return get_object_or_404(queryset or self.get_queryset(), slug=self.kwargs[self.slug_url_kwarg])
@@ -60,7 +63,7 @@ class NotesCategory(DataMixin, ListView):
     paginate_by = 5
 
     def get_queryset(self) -> QuerySet:
-        return Note.published.filter(cat__slug=self.kwargs['cat_slug']).select_related('cat')
+        return Note.published.filter(cat__slug=self.kwargs['cat_slug']).select_related('cat', 'author')
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -76,7 +79,7 @@ class NotesTags(DataMixin, ListView):
     paginate_by = 5
 
     def get_queryset(self) -> QuerySet:
-        return Note.published.filter(tags__slug=self.kwargs['tag_slug']).select_related('cat')
+        return Note.published.filter(tags__slug=self.kwargs['tag_slug']).select_related('cat', 'author')
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -121,9 +124,11 @@ class DeletePost(PermissionRequiredMixin, DataMixin, DeleteView):
 
     def get_object(self, queryset=None):
         obj = super().get_object(queryset)
-        if not (obj.author == self.request.user and not self.request.user.is_superuser and not self.request.user.is_staff):
+        if obj.author == self.request.user or self.request.user.is_superuser or self.request.user.is_staff:
+            return obj
+        else:
             raise PermissionDenied("You can't delete this post.")
-        return obj
+
 
 class UpdatePost(PermissionRequiredMixin, DataMixin, UpdateView):
     template_name = 'notes/update_post.html'
@@ -160,7 +165,9 @@ class AboutView(DataMixin, TemplateView):
         return self.get_mixin_context(context, title_page='О сайте')
 
 
-class ContactView(DataMixin, TemplateView):
+class ContactView(DataMixin, FormView):
+    form_class = ContactForm
+    success_url = reverse_lazy('home')
     template_name = "notes/contact.html"
 
     def get_context_data(self, **kwargs):
@@ -168,3 +175,53 @@ class ContactView(DataMixin, TemplateView):
         context['page_description'] = 'Обратная связь'
         context['page_description_name'] = 'description'
         return self.get_mixin_context(context, title_page='Обратная связь')
+
+    def form_valid(self, form):
+        # Если пользователь аутентифицирован, используем данные из скрытых полей
+        if self.request.user.is_authenticated:
+            name = form.cleaned_data['name_hidden']
+            email = form.cleaned_data['email_hidden']
+        else:
+            # Получаем данные из формы
+            name = form.cleaned_data['name']
+            email = form.cleaned_data['email']
+
+        content = form.cleaned_data['content']
+
+        # Формируем тему и текст письма
+        subject = f"Новое сообщение от {name}"
+        message = f"""
+        Имя: {name}
+        Email: {email}
+        Сообщение:
+        {content}
+        """
+        # Отправляем письмо
+        try:
+            send_mail(
+                subject,  # Тема письма
+                message,  # Текст письма
+                settings.DEFAULT_FROM_EMAIL,  # От кого (ваш email из настроек)
+                [settings.EMAIL_ADMIN],  # Кому (ваш email из настроек)
+                fail_silently=False,  # Выводить ошибки, если отправка не удалась
+            )
+            # Добавляем сообщение об успехе
+            messages.success(self.request, 'Ваше сообщение успешно отправлено!')
+        except Exception as e:
+            # Добавляем сообщение об ошибке
+            messages.error(self.request, f'Ошибка при отправке письма: {e}')
+
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        # Восстанавливаем значения полей name и email из скрытых полей
+        if self.request.user.is_authenticated:
+            form.data = form.data.copy()  # Делаем копию данных формы
+            form.data['name'] = form.data.get('name_hidden', '')
+            form.data['email'] = form.data.get('email_hidden', '')
+        return super().form_invalid(form)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs

@@ -1,10 +1,12 @@
+from string import ascii_letters, digits
+
+from captcha.fields import CaptchaField
 from django import forms
 # from django.core.validators import MinLengthValidator, MaxLengthValidator
 from django.utils.deconstruct import deconstructible
-from django_ckeditor_5.widgets import CKEditor5Widget
+from docutils.nodes import label
 
 from .models import Category, Note
-from string import ascii_letters, digits
 
 
 @deconstructible
@@ -49,13 +51,13 @@ class AddPostForm(forms.ModelForm):
         self.fields['content_full'].widget.attrs.update({'class': 'form-control django_ckeditor_5'})
         self.fields['content_full'].required = False
 
-
     # def clean_title(self):
     #     allowed_characters = "абвгдеёжзий̆клмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ123456789- "
     #     title = self.cleaned_data['title']
     #     if not set(title).issubset(set(allowed_characters)):
     #         raise forms.ValidationError('Должны присутствовать только русские буквы, цифры, дефис и пробел. V2')
     #     return title
+
 
 class UpdatePostForm(forms.ModelForm):
     cat = forms.ModelChoiceField(queryset=Category.objects.all(), label="Категория", empty_label="Категория не выбрана")
@@ -67,7 +69,6 @@ class UpdatePostForm(forms.ModelForm):
             'title': forms.TextInput(attrs={'class': 'form-input'}),
         }
 
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields:
@@ -78,5 +79,48 @@ class UpdatePostForm(forms.ModelForm):
         self.fields['content_full'].widget.attrs.update({'class': 'form-control django_ckeditor_5'})
         self.fields['content_full'].required = False
 
+
 class UploadFileForm(forms.Form):
     file = forms.ImageField(label="Файл")
+
+
+class ContactForm(forms.Form):
+    name = forms.CharField(
+        label='Имя',
+        widget=forms.TextInput(attrs={'class': 'form-input'})
+    )
+    email = forms.CharField(
+        required=False,
+        label='E-mail',
+        widget=forms.TextInput(attrs={'class': 'form-input'})
+    )
+    content = forms.CharField(
+        label="Сообщение",
+        widget=forms.Textarea(attrs={'rows': 3}),
+        max_length=3000
+    )
+    captcha = CaptchaField()
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super(ContactForm, self).__init__(*args, **kwargs)
+
+        if user and user.is_authenticated:
+            self.fields['name'].initial = user.username
+            self.fields['name'].widget.attrs['disabled'] = True  # Отключаем поле
+            self.fields['name'].required = False
+            self.fields['email'].initial = user.email
+            self.fields['email'].widget.attrs['disabled'] = True  # Отключаем поле
+            self.fields['email'].required = False
+
+            # Добавляем скрытые поля для передачи данных на сервер
+            self.fields['name_hidden'] = forms.CharField(
+                initial=user.username,
+                widget=forms.HiddenInput()
+            )
+            self.fields['email_hidden'] = forms.EmailField(
+                initial=user.email,
+                widget=forms.HiddenInput()
+            )
+        # else:
+        #     self.fields['captcha'] = CaptchaField()

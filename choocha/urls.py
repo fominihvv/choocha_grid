@@ -44,6 +44,7 @@ urlpatterns = [
     re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
     path("__debug__/", include("debug_toolbar.urls")),
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
+    path('captcha/', include('captcha.urls')),
 ]
 
 if settings.DEBUG:

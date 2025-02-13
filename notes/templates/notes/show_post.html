@@ -17,11 +17,11 @@
 
     <div class="actions">
         {% if perms.notes.change_note %}
-            <a href="{{ post.get_update_url }}">Изменить статью</a>
+            <a href="{{ post.get_update_url }}" class="button-success">Изменить статью</a>
         {% endif %}
         <br>
         {% if perms.notes.delete_note %}
-            <a href="{{ post.get_delete_url }}">Удалить статью</a>
+            <a href="{{ post.get_delete_url }}" class="button-danger">Удалить статью</a>
         {% endif %}
     </div>
 {% endblock %}
@@ -36,7 +36,7 @@
         {% endautoescape %}
         <div class="clear"></div>
         <div class="article-panel">
-            <p class="first">Категория: {{ post.cat.name }} |
+            <p class="first">Категория: <a href="{{ post.cat.get_absolute_url }}">{{ post.cat.name }}</a> |
                 автор: {{ post.author.username|default:"Автор не известен" }}</p>
             <p class="last">Дата: {{ post.time_update|date:"d-m-Y H:i" }}</p>
         </div>
