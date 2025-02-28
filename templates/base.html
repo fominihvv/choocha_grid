@@ -6,16 +6,20 @@
     {% load analytical %}
     {% analytical_head_top %}
     <title>{{ title }}</title>
-    <link type="text/css" href="{% static 'notes/css/styles.css' %}" rel="stylesheet">
-    <link type="text/css" href="{% static 'notes/css/ckeditor5-content.css' %}" rel="stylesheet">
-    <link rel="shortcut icon" href="{% static 'notes/images/main.ico' %}" type="image/x-icon">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="{{ page_description_name }}" content="{{ page_description }}">
+    <link rel="shortcut icon" href="{% static 'notes/images/favicon.ico' %}" type="image/x-icon">
+    <link rel="stylesheet" href="{% static 'notes/css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'notes/css/portable.css' %}">
+    <link rel="stylesheet" href="{% static 'notes/css/ckeditor5-content.css' %}">
     {% block canonical_url %}
         <link rel="canonical" href="{% url '/' %}"/>
     {% endblock %}
     {% analytical_head_bottom %}
+    {% block meta %}
+        <!-- Блок для дополнительных метатегов -->
+    {% endblock %}
 </head>
 <body>
 {% analytical_body_top %}
@@ -27,9 +31,7 @@
         {% block mainmenu %}
             <div class="header-content">
                 <div class="logo">
-                    <a href="{% url 'home' %}">
-                        <div class="logo-img"></div>
-                    </a>
+                    <a href="{% url 'home' %}" ><img src="{% static 'notes/images/favicon.ico' %}" alt="Логотип"></a>
                 </div>
                 <nav class="mainmenu">
                     <ul>

@@ -4,7 +4,7 @@ from .models import Note, TagPost, Category
 
 class NoteSitemap(Sitemap):
     changefreq = 'weekly'
-    priority = 0.9
+    priority = 1.0
 
     def items(self):
         return Note.published.all()
@@ -15,14 +15,14 @@ class NoteSitemap(Sitemap):
 
 class TagSitemap(Sitemap):
     changefreq = 'weekly'
-    priority = 0.9
+    priority = 0.8
 
     def items(self):
         return TagPost.objects.all().order_by('tag')
 
 class CategorySitemap(Sitemap):
     changefreq = 'weekly'
-    priority = 0.9
+    priority = 0.7
 
     def items(self):
         return Category.objects.all().order_by('name')

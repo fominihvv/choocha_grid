@@ -122,5 +122,3 @@ class ContactForm(forms.Form):
                 initial=user.email,
                 widget=forms.HiddenInput()
             )
-        # else:
-        #     self.fields['captcha'] = CaptchaField()

@@ -93,7 +93,7 @@ class AddPost(PermissionRequiredMixin, DataMixin, CreateView):
     template_name = 'notes/add_post.html'
     form_class = AddPostForm
     success_url = reverse_lazy('home')
-    login_url = reverse_lazy('home')
+    login_url = reverse_lazy('users:login')
     permission_required = ('notes.add_note',)
 
     def get_context_data(self, **kwargs):
@@ -113,7 +113,7 @@ class DeletePost(PermissionRequiredMixin, DataMixin, DeleteView):
     template_name = 'notes/delete_post.html'
     context_object_name = 'post'
     success_url = reverse_lazy('home')
-    login_url = reverse_lazy('home')
+    login_url = reverse_lazy('users:login')
     permission_required = ('notes.delete_note',)
 
     def get_context_data(self, **kwargs):
@@ -134,7 +134,7 @@ class UpdatePost(PermissionRequiredMixin, DataMixin, UpdateView):
     template_name = 'notes/update_post.html'
     form_class = UpdatePostForm
     success_url = reverse_lazy('home')  # Если не указывать, то идёт редирект на саму статью используя get_absolute_url
-    login_url = reverse_lazy('home')
+    login_url = reverse_lazy('users:login')
     permission_required = ('notes.change_note',)
     context_object_name = 'post'
 

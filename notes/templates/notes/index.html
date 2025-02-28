@@ -26,14 +26,19 @@
             });
         }, 5000);  // 5000 миллисекунд = 5 секунд
     </script>
-    
+
     <ul class="list-articles">
         {% for post in posts %}
             <li class="article">
                 <div class="article-panel">
                     <p class="first">Категория: <a href="{{ post.cat.get_absolute_url }}">{{ post.cat.name }}</a> |
                         автор: {{ post.author.username|default:"Автор не известен" }}</p>
-                    <p class="last">Дата: {{ post.time_update|date:"d-m-Y H:i" }}</p>
+                    <p class="last">
+                        <i class="fas fa-calendar-alt"></i> Опубликовано: {{ post.time_create|date:"d-m-Y H:i" }}
+                        {% if post.time_update != post.time_create %}
+                            | <i class="fas fa-sync-alt"></i> Обновлено: {{ post.time_update|date:"d-m-Y H:i" }}
+                        {% endif %}
+                    </p>
                 </div>
                 {% if post.image %}
                     <div class="article-image">

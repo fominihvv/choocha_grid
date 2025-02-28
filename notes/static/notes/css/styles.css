@@ -61,52 +61,6 @@ body {
     height: 100vh; /* Высота боковой панели будет равна высоте окна браузера */
 }
 
-.leftchapters {
-    flex-shrink: 0; /* Элементы списка категорий и раздел "Наш канал" останутся вверху */
-}
-
-.leftchapters > ul > li {
-    margin-top: 30px;
-    color: #999;
-}
-
-.leftchapters > ul > li.selected {
-    color: #0059b2;
-}
-
-.leftchapters > ul > li > a {
-    color: #444;
-    text-decoration: none;
-}
-
-.leftchapters > ul > li > a:hover {
-    color: #CC0000;
-}
-
-.share {
-    margin-top: 60px;
-}
-
-.share > p {
-    margin: 30px 0;
-}
-
-.share > a {
-    display: inline-block;
-    width: 40px;
-    height: 40px;
-    margin: 0 20px 0 0;
-}
-
-.share-yt {
-    width: 100%;
-    height: 30px;
-    background: url('../images/share_yt.png') no-repeat 0 0;
-}
-
-.share-yt:hover {
-    background-position: 0 -30px;
-}
 .content {
     flex: 1;
     margin-top: 6px; /* Добавляем отступ от шапки */
@@ -433,7 +387,7 @@ form {
 
 
 form p {
-    display: flex;
+/*    display: flex; */
     align-items: center; /* Выравнивание по вертикали */
     margin: 0; /* Убираем отступы у параграфов */
 }
@@ -449,8 +403,8 @@ form textarea {
 
 form textarea {
     resize: both; /* Разрешаем изменение высоты textarea по вертикали и горизонтали*/
-    width: 600px; 
-    height: 200px; 
+    width: 600px;
+    height: 200px;
 }
 
 button[type="submit"] {
@@ -554,62 +508,3 @@ button[type="submit"]:hover {
     border-color: #ebccd1;
 }
 
-@media (max-width: 768px) {
-    .main-content {
-        flex-direction: column;
-    }
-
-    .sidebar {
-        width: 100%;
-        margin-right: 0;
-        margin-bottom: 20px;
-    }
-}
-
-@media (max-width: 768px) {
-    .article-panel {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .article-panel .first,
-    .article-panel .last {
-        margin-bottom: 5px;
-    }
-
-    .list-pages ul {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .list-pages .page-num {
-        margin-bottom: 5px;
-    }
-}
-
-@media (max-width: 768px) {
-    .tags-list {
-        gap: 5px; /* Уменьшаем отступ между тегами */
-    }
-
-    .tags-list li {
-        padding: 3px 8px; /* Уменьшаем отступы внутри тегов */
-        font-size: 14px; /* Уменьшаем размер шрифта */
-    }
-}
-
-@media (max-width: 600px) {
-    .button-like {
-        width: 100%; /* Кнопки занимают всю ширину */
-        box-sizing: border-box; /* Учитываем padding в ширине */
-    }
-}
-
-@media (max-width: 600px) {
-    .button-danger,
-    .button-success {
-        width: 100%; /* Кнопки занимают всю ширину */
-        box-sizing: border-box; /* Учитываем padding в ширине */
-        margin: 5px 0; /* Отступы между кнопками */
-    }
-}

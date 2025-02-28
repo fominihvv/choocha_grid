@@ -31,8 +31,7 @@ def show_all_tags():
 @register.inclusion_tag('notes/get_last_posts.html')
 def show_last_posts():
     posts = (
-        Note.objects
-        .filter(is_published=True)
+        Note.published
         .order_by('-time_update')[:5]
     )
     return {'posts': posts}

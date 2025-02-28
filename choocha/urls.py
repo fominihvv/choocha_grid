@@ -18,15 +18,13 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include, re_path
-from django.views.decorators.cache import never_cache
-from django.views.static import serve
 from django.contrib.sitemaps.views import sitemap
+from django.urls import path, include, re_path
+from django.views.static import serve
 
 from notes.sitemaps import NoteSitemap, TagSitemap, CategorySitemap
-from .settings import BASE_DIR
-from .views import e_handler404, e_handler500
 from .robots import robots_txt
+from .views import e_handler404, e_handler500, e_handler403
 
 sitemaps = {
     'notes': NoteSitemap,
@@ -54,5 +52,6 @@ urlpatterns += [
     path('robots.txt', robots_txt),
 ]
 
+handler403 = e_handler403
 handler404 = e_handler404
 handler500 = e_handler500
