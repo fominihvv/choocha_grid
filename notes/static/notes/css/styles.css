@@ -58,7 +58,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    height: 100vh; /* Высота боковой панели будет равна высоте окна браузера */
+/*    height: 100vh; /* Высота боковой панели будет равна высоте окна браузера */
 }
 
 .content {
@@ -121,6 +121,18 @@ body {
     margin-bottom: 15px;
 }
 
+.article-title-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    transition: opacity 0.3s ease;
+}
+
+.article-title-link:hover {
+    opacity: 0.8;
+}
+
+
 .article-title a {
     color: #333;
     text-decoration: none;
@@ -138,6 +150,7 @@ body {
     border-radius: 8px; /* Скругление углов */
     overflow: hidden; /* Скрывает содержимое, выходящее за пределы блока */
 }
+
 
 .link-read-post {
     text-align: right;

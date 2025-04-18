@@ -2,7 +2,12 @@
 {% if tags %}
     <ul class="tags-list">
         {% for tag in tags %}
-            <li><a href="{{ tag.get_absolute_url }}">{{ tag.tag }}</a></li>
+            <li>
+                <a href="{{ tag.get_absolute_url }}"
+                   title="Перейти к метке «{{ tag.tag|escape }}»">
+                   {{ tag.tag }}
+                </a>
+            </li>
         {% endfor %}
     </ul>
 {% endif %}

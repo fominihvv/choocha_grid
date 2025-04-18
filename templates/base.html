@@ -9,17 +9,18 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="{{ page_description_name }}" content="{{ page_description }}">
+    <meta name="yandex-verification" content="6484a7d785eef504" />
     <link rel="shortcut icon" href="{% static 'notes/images/favicon.ico' %}" type="image/x-icon">
     <link rel="stylesheet" href="{% static 'notes/css/styles.css' %}">
     <link rel="stylesheet" href="{% static 'notes/css/portable.css' %}">
     <link rel="stylesheet" href="{% static 'notes/css/ckeditor5-content.css' %}">
     {% block canonical_url %}
-        <link rel="canonical" href="{% url '/' %}"/>
+        <link rel="canonical" href="https://choocha.ru/"/>
     {% endblock %}
-    {% analytical_head_bottom %}
     {% block meta %}
         <!-- Блок для дополнительных метатегов -->
     {% endblock %}
+    {% analytical_head_bottom %}
 </head>
 <body>
 {% analytical_body_top %}
@@ -31,21 +32,33 @@
         {% block mainmenu %}
             <div class="header-content">
                 <div class="logo">
-                    <a href="{% url 'home' %}" ><img src="{% static 'notes/images/favicon.ico' %}" alt="Логотип"></a>
+                    <a href="{% url 'home' %}"><img src="{% static 'notes/images/favicon.ico' %}" alt="Логотип"></a>
                 </div>
                 <nav class="mainmenu">
                     <ul>
                         {% for m in mainmenu %}
                             {% if forloop.last %}
                                 <li class="last">
-                                    {% if m.url_name %}<a href="{% url m.url_name %}">{{ m.title }}</a>
+                                    {% if m.url_name %}
+                                        <a href="{% url m.url_name %}"
+                                           title="Перейти к пункту меню «{{ m.title|escape }}»">
+                                            {{ m.title }}
+                                        </a>
                                     {% else %}
                                         {{ m.title }}
                                     {% endif %} |
-                                    <a href="{% url m.url_name2 %}">{{ m.title2 }}</a>
+                                    <a href="{% url m.url_name2 %}"
+                                       title="Перейти к пункту меню «{{ m.title2|escape }}»">
+                                        {{ m.title2 }}
+                                    </a>
                                 </li>
                             {% else %}
-                                <li><a href="{% url m.url_name %}">{{ m.title }}</a></li>
+                                <li>
+                                    <a href="{% url m.url_name %}"
+                                       title="Перейти к пункту меню «{{ m.title|escape }}»">
+                                        {{ m.title }}
+                                    </a>
+                                </li>
                             {% endif %}
                         {% endfor %}
                     </ul>
@@ -67,7 +80,7 @@
                             {% if cat_selected == 0 %}
                                 <li class="selected">Все категории</li>
                             {% else %}
-                                <li><a href="{% url 'home' %}">Все категории</a></li>
+                                <li><a href="{% url 'home' %}" title="Все категории">Все категории</a></li>
                             {% endif %}
                             {% show_categories cat_selected %}
                         </ul>
@@ -108,8 +121,7 @@
 
     <!-- Подвал -->
     <footer class="footer">
-        <p>&copy; 2023 Частичное или полное копирование информации с данного сайта для распространения на других
-            ресурсах, в том числе и бумажных, строго запрещено.</p>
+        <p>&copy; 2024-2025 Этот сайт - учебный проект, разрабатываемый в рамках изучения фреймворка Django.</p>
     </footer>
 </div>
 

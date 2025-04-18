@@ -3,6 +3,11 @@
     {% if cat_selected == cat.pk %}
         <li class="selected">{{ cat.name }}</li>
     {% else %}
-        <li><a href={{ cat.get_absolute_url }}>{{ cat.name }}</a></li>
+        <li>
+            <a href="{{ cat.get_absolute_url }}" 
+               title="Перейти в категорию «{{ cat.name|escape }}»">
+               {{ cat.name }}
+            </a>
+        </li>
     {% endif %}
 {% endfor %}

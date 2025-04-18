@@ -11,7 +11,7 @@
 .ck-content code {
     background-color: hsla(0, 0%, 78%, .3); 
     border-radius: 2px;
-    padding: .15em
+    padding: .15em;
     font-family: "Courier New", monospace; /* Моноширинный шрифт */
     font-size: 14px; /* Размер шрифта */
     color: #333; /* Цвет текста */

@@ -189,8 +189,9 @@ class ContactView(DataMixin, FormView):
         content = form.cleaned_data['content']
 
         # Формируем тему и текст письма
-        subject = f"Новое сообщение от {name}"
+        subject = f"Choocha.ru. Новое сообщение от {name}"
         message = f"""
+        Вам что-то написали на сайте.
         Имя: {name}
         Email: {email}
         Сообщение:

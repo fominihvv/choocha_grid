@@ -1,6 +1,9 @@
 <!-- choocha\notes\templates\notes\get_last_articles.html -->
 {% for post in posts %}
     <li>
-        <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+        <a href="{{ post.get_absolute_url }}"
+            title="Перейти к статье «{{ post.title|escape }}»">
+            {{ post.title|slice:":50" }}{% if post.title|length > 50 %}...{% endif %}
+        </a>
     </li>
 {% endfor %}
