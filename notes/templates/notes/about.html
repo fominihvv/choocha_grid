@@ -4,15 +4,121 @@
     <link rel="canonical" href="{% url 'about' %}"/>
 {% endblock %}
 {% block content %}
-    
+
     <h1> {{ title }} </h1>
-    <p>Данный сайт является учебным проектом, разработанным в процессе изучения Django.</p>
-
-    <!-- Дополнительная информация -->
-    <p>Цель проекта - освоить основы работы с фреймворком Django и создать функциональный веб-приложение.</p>
-
-    <!-- Возможные будущие улучшения -->
-    <p>В планах - расширение функционала и добавление новых возможностей.</p>
-
+    <h2>
+        Описание проекта
+    </h2>
+    <p>
+        Данный сайт представляет собой полноценное веб-приложение, разработанное на Django с использованием современных
+        DevOps-практик. Проект реализ как учебный, но с промышленным уровнем deployment.
+    </p>
+    <p>
+        &nbsp;
+    </p>
+    <p style="margin-left:0;">
+        <strong>Технологический стек</strong>:
+    </p>
+    <ul>
+        <li>
+            <p style="margin-left:0px;">
+                <strong>Backend</strong>: Django (Python) с системой аутентификации, ORM и административной панелью
+            </p>
+        </li>
+        <li>
+            <p style="margin-left:0px;">
+                <strong>База данных</strong>: PostgreSQL с регулярными бэкапами
+            </p>
+        </li>
+        <li>
+            <p style="margin-left:0px;">
+                <strong>Инфраструктура</strong>:
+            </p>
+            <ul>
+                <li>
+                    <p style="margin-left:0px;">
+                        Docker-контейнеризация (Docker Compose)
+                    </p>
+                </li>
+                <li>
+                    <p style="margin-left:0px;">
+                        Nginx как reverse proxy с HTTPS
+                    </p>
+                </li>
+                <li>
+                    <p style="margin-left:0px;">
+                        Fail2ban для защиты от bruteforce-атак
+                    </p>
+                </li>
+            </ul>
+        </li>
+        <li>
+            <p style="margin-left:0px;">
+                <strong>Дополнительные функции</strong>:
+            </p>
+            <ul>
+                <li>
+                    <p style="margin-left:0px;">
+                        Система комментариев с модерацией (пока в режиме тестирования)
+                    </p>
+                </li>
+                <li>
+                    <p style="margin-left:0px;">
+                        Отправка email-уведомлений (регистрация, обратная связь)
+                    </p>
+                </li>
+            </ul>
+        </li>
+    </ul>
+    <p style="margin-left:0;">
+        <strong>Особенности реализации</strong>:
+    </p>
+    <ul>
+        <li>
+            <p style="margin-left:0px;">
+                Автоматическое развертывание через CI/CD (GitHub Actions) (пока в режиме тестирования)
+            </p>
+        </li>
+        <li>
+            <p style="margin-left:0px;">
+                Контейнеры настроены на автозапуск при перезагрузке сервера
+            </p>
+        </li>
+        <li>
+            <p style="margin-left:0px;">
+                Оптимизированная работа со статикой (Nginx + Django)
+            </p>
+        </li>
+        <li>
+            <p style="margin-left:0px;">
+                Защита от DDoS через Nginx rate limiting
+            </p>
+        </li>
+    </ul>
+    <p style="margin-left:0;">
+        <strong>Планы по развитию</strong>:
+    </p>
+    <ul>
+        <li>
+            <p style="margin-left:0px;">
+                Добавление API на DRF (Django REST Framework)
+            </p>
+        </li>
+        <li>
+            <p style="margin-left:0px;">
+                Интеграция Celery для фоновых задач
+            </p>
+        </li>
+        <li>
+            <p style="margin-left:0px;">
+                Реализация полнотекстового поиска
+            </p>
+        </li>
+        <li>
+            <p style="margin-left:0px;">
+                Настройка мониторинга (Prometheus + Grafana)
+            </p>
+        </li>
+    </ul>
 
 {% endblock %}

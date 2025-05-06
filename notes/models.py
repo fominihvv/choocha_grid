@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.shortcuts import reverse
+from django.utils.html import strip_tags
 from django_ckeditor_5.fields import CKEditor5Field
 from django_extensions.db.fields import AutoSlugField
 from slugify import slugify
@@ -85,7 +87,7 @@ class Note(models.Model):
         null=True
     )
     content_short = CKEditor5Field(
-        max_length=600,
+        max_length=2000,
         blank=True,
         null=True,
         verbose_name='Краткий текст статьи'

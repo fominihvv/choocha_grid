@@ -92,12 +92,12 @@ WSGI_APPLICATION = 'choocha.wsgi.application'
 # Настройки базы данных
 DATABASES = {
     'default': {
-        'ENGINE': os.getenv('DB_ENGINE'),
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
+        'ENGINE': os.getenv('DATABASE_ENGINE'),
+        'NAME': os.getenv('DATABASE_NAME'),
+        'USER': os.getenv('DATABASE_USERNAME'),
+        'PASSWORD': os.getenv('DATABASE_PASSWORD'),
+        'HOST': os.getenv('DATABASE_HOST'),
+        'PORT': os.getenv('DATABASE_PORT'),
     }
 }
 
@@ -198,7 +198,7 @@ customColorPalette = [
 CKEDITOR_5_CONFIGS = {
     'default': {
         'toolbar': ['heading', '|', 'bold', 'italic', 'link',
-                    'bulletedList', 'numberedList', 'blockQuote', '|', 'codeBlock', 'code', '|', 'imageUpload', ],
+                    'bulletedList', 'numberedList', 'blockQuote', '|', 'codeBlock', 'code', 'sourceEditing', '|', 'imageUpload', ],
         'image': {
             'toolbar': ['imageTextAlternative', '|', 'imageStyle:alignLeft',
                         'imageStyle:alignRight', 'imageStyle:alignCenter', 'imageStyle:side', '|'],
@@ -320,3 +320,11 @@ LOGGING = {
 #         },
 #     },
 # }
+
+#!!!!!!!!  для докера раскомментировать !!!!!!!!
+# CSRF_TRUSTED_ORIGINS = [
+#     'https://choocha.ru',
+#     'http://choocha.ru',
+#     'https://www.choocha.ru',
+#     'http://www.choocha.ru',
+# ]

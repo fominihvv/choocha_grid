@@ -4,7 +4,7 @@ from captcha.fields import CaptchaField
 from django import forms
 # from django.core.validators import MinLengthValidator, MaxLengthValidator
 from django.utils.deconstruct import deconstructible
-from docutils.nodes import label
+from django.utils.html import strip_tags
 
 from .models import Category, Note
 
@@ -57,6 +57,14 @@ class AddPostForm(forms.ModelForm):
     #     if not set(title).issubset(set(allowed_characters)):
     #         raise forms.ValidationError('Должны присутствовать только русские буквы, цифры, дефис и пробел. V2')
     #     return title
+
+    def clean_content_short(self):
+        content = self.cleaned_data['content_short']
+        print(len(strip_tags(content)))
+        print(content)
+        if content and len(strip_tags(content)) > 600:
+            raise forms.ValidationError("Превышен лимит в 600 символов")
+        return content
 
 
 class UpdatePostForm(forms.ModelForm):

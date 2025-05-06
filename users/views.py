@@ -1,11 +1,15 @@
+from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView, PasswordChangeView
+from django.core.mail import send_mail
 from django.http import HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, UpdateView
+from social_core.utils import first
 
+from choocha import settings
 from users.forms import LoginUserForm, RegisterUserForm, ProfileUserForm, UserPasswordChangeForm
 
 
@@ -27,6 +31,40 @@ class RegisterUser(CreateView):
     template_name = 'users/register.html'
     extra_context = {'title': "Регистрация"}
     success_url = reverse_lazy('users:login')
+
+    def form_valid(self, form):
+        # Получаем данные из формы
+        username = form.cleaned_data['username']
+        email = form.cleaned_data['email']
+        first_name = form.cleaned_data['first_name']
+        last_name = form.cleaned_data['last_name']
+
+        # Формируем тему и текст письма
+        subject = f"Choocha.ru. Новый пользователь {username}"
+        message = f"""
+        Новый пользователь
+        
+        Логин: {username}
+        Email: {email}
+        Имя: {first_name}
+        Фамилия: {last_name}
+        """
+        # Отправляем письмо
+        try:
+            send_mail(
+                subject,  # Тема письма
+                message,  # Текст письма
+                settings.DEFAULT_FROM_EMAIL,  # От кого (ваш email из настроек)
+                [settings.EMAIL_ADMIN],  # Кому (ваш email из настроек)
+                fail_silently=False,  # Выводить ошибки, если отправка не удалась
+            )
+            # Добавляем сообщение об успехе
+            messages.success(self.request, 'Ваше сообщение успешно отправлено!')
+        except Exception as e:
+            # Добавляем сообщение об ошибке
+            messages.error(self.request, f'Ошибка при отправке письма: {e}')
+
+        return super().form_valid(form)
 
 
 class ProfileUser(LoginRequiredMixin, UpdateView):

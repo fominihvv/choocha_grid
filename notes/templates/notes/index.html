@@ -45,11 +45,13 @@
                         {% endif %}
                     </p>
                 </div>
+                {% comment "Временное отключение изображения" %}
                 {% if post.image %}
                     <div class="article-image">
                         <img src="{{ post.image.url }}" alt="{{ post.title }}">
                     </div>
                 {% endif %}
+                {% endcomment %}
                 <a href="{{ post.get_absolute_url }}"
                    class="article-title-link"
                    title="Перейти к статье «{{ post.title|escape }}»">
@@ -57,13 +59,11 @@
                         {{ post.title }}
                     </h2>
                 </a>
-                <div class="article-content">
-                    {% autoescape off %}
-                        <div class="ck-content">
-                            {{ post.content_short|safe }}
-                        </div>
-                    {% endautoescape %}
-                </div>
+                {% autoescape off %}
+                    <div class="ck-content">
+                        {{ post.content_short|safe }}
+                    </div>
+                {% endautoescape %}
                 <div class="clear"></div>
                 <p class="link-read-post">
                     <a href="{{ post.get_absolute_url }}" title="Читать далее">Читать далее</a>
