@@ -2,18 +2,19 @@ from typing import Any
 
 from bs4 import BeautifulSoup
 from django.contrib import messages
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
-from django.core.mail import send_mail
 from django.db.models import QuerySet
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
+from django.utils import timezone
+from django.views import View
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, DeleteView, UpdateView, FormView
 
-from choocha import settings
-from .forms import AddPostForm, UpdatePostForm, ContactForm
-from .models import Note, TagPost, Category
-from .utils import DataMixin
+from .forms import AddPostForm, UpdatePostForm, ContactForm, CommentForm
+from .models import Note, TagPost, Category, Comment
+from .utils import DataMixin, send_notification_email
 
 
 class NoteHome(DataMixin, ListView):
@@ -38,7 +39,7 @@ class ShowPost(DataMixin, DetailView):
     context_object_name = 'post'
 
     def get_queryset(self) -> QuerySet:
-        return Note.published.all().select_related('cat', 'author')
+        return Note.published.all().select_related('cat', 'author').prefetch_related('comments', 'comments__user')
 
     def get_object(self, queryset: QuerySet = None) -> QuerySet:
         return get_object_or_404(queryset or self.get_queryset(), slug=self.kwargs[self.slug_url_kwarg])
@@ -54,6 +55,8 @@ class ShowPost(DataMixin, DetailView):
             clean_text = soup.get_text(strip=True)  # Извлекаем текст и убираем лишние пробелы
             context['page_description'] = clean_text[:160]
             context['page_description_name'] = 'description'
+
+        context['comment_form'] = CommentForm()
         return self.get_mixin_context(context, title=context['post'].title)
 
 
@@ -188,29 +191,19 @@ class ContactView(DataMixin, FormView):
 
         content = form.cleaned_data['content']
 
-        # Формируем тему и текст письма
-        subject = f"Choocha.ru. Новое сообщение от {name}"
-        message = f"""
-        Вам что-то написали на сайте.
-        Имя: {name}
-        Email: {email}
-        Сообщение:
-        {content}
-        """
-        # Отправляем письмо
-        try:
-            send_mail(
-                subject,  # Тема письма
-                message,  # Текст письма
-                settings.DEFAULT_FROM_EMAIL,  # От кого (ваш email из настроек)
-                [settings.EMAIL_ADMIN],  # Кому (ваш email из настроек)
-                fail_silently=False,  # Выводить ошибки, если отправка не удалась
-            )
-            # Добавляем сообщение об успехе
-            messages.success(self.request, 'Ваше сообщение успешно отправлено!')
-        except Exception as e:
-            # Добавляем сообщение об ошибке
-            messages.error(self.request, f'Ошибка при отправке письма: {e}')
+        context = {'name': name, 'email': email, 'content': content}
+        send_notification_email(
+            request=self.request,
+            subject_template="Choocha.ru. Сообщение от {name}",
+            message_template="""
+            Сообщение из формы обратной связи
+
+            От: {name} ({email})
+            Текст: {content}
+            """,
+            alert=True,
+            context=context
+        )
 
         return super().form_valid(form)
 
@@ -226,3 +219,143 @@ class ContactView(DataMixin, FormView):
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
+
+
+class AddCommentView(LoginRequiredMixin, CreateView):
+    model = Comment
+    form_class = CommentForm
+    template_name = 'notes/show_post.html'  # Используем тот же шаблон
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        form.instance.post = Note.objects.get(slug=self.kwargs['post_slug'])
+
+        # Для админов комментарий сразу активен
+        if self.request.user.is_staff or self.request.user.is_superuser:
+            form.instance.active = True
+            messages.success(self.request, 'Комментарий добавлен')
+        else:
+            messages.success(self.request, 'Комментарий отправлен на модерацию')
+
+        context = {
+            'user': form.instance.user,
+            'post': form.instance.post,
+            'body': form.cleaned_data['body'],
+        }
+
+        send_notification_email(
+            request=self.request,
+            subject_template="Choocha.ru. Новый комментарий от {user}",
+            message_template="""
+            Новый комментарий
+
+            Пользователь: {user}
+            К посту: {post}
+            Текст: {body}
+            """,
+            alert=False,
+            context=context
+        )
+
+        print(form.cleaned_data, form.instance.user, form.instance.post)
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('post', kwargs={'post_slug': self.object.post.slug}) + f'#comment-{self.object.id}'
+
+
+class ApproveComment(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get(self, request, pk):
+        comment = get_object_or_404(Comment, pk=pk)
+        comment.active = True
+        comment.save()
+        messages.success(request, 'Комментарий одобрен')
+        return HttpResponseRedirect(
+            reverse('post', kwargs={'post_slug': comment.post.slug}) + f'#comment-{comment.id}'
+        )
+
+
+class DeleteComment(LoginRequiredMixin, DeleteView):
+    model = Comment
+    template_name = 'notes/delete_comment.html'
+    context_object_name = 'comment'
+
+    def get_success_url(self):
+        return reverse_lazy('post', kwargs={'post_slug': self.object.post.slug})
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        # Проверяем права: автор, модератор или суперпользователь
+        if obj.user == self.request.user or self.request.user.is_staff or self.request.user.is_superuser:
+            return obj
+        raise PermissionDenied("У вас нет прав на удаление этого комментария")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_description'] = 'noindex, nofollow'
+        context['page_description_name'] = 'robots'
+        context['title_page'] = 'Удаление комментария'
+        return context
+
+
+class EditComment(LoginRequiredMixin, UpdateView):
+    model = Comment
+    form_class = CommentForm  # Указываем форму для редактирования
+    template_name = 'notes/edit_comment.html'
+    context_object_name = 'comment'
+
+    def get_success_url(self):
+        # Добавляем якорь к комментарию для удобства
+        return reverse_lazy('post', kwargs={'post_slug': self.object.post.slug}) + f'#comment-{self.object.id}'
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        # Проверяем права: автор или суперпользователь/модератор
+        if not (obj.user == self.request.user or self.request.user.is_staff or self.request.user.is_superuser):
+            raise PermissionDenied("У вас нет прав на редактирование этого комментария")
+        return obj
+
+    def form_valid(self, form):
+        # Автоматически обновляем дату редактирования
+        form.instance.updated = timezone.now()
+
+        # Для админов комментарий сразу активен
+        if self.request.user.is_staff or self.request.user.is_superuser:
+            messages.success(self.request, 'Комментарий изменён')
+        else:
+            form.instance.active = False
+            messages.success(self.request, 'Комментарий отправлен на модерацию')
+
+        context = {
+            'user': form.instance.user,
+            'post': form.instance.post,
+            'body': form.cleaned_data['body'],
+        }
+
+        send_notification_email(
+            request=self.request,
+            subject_template="Choocha.ru. Изменён комментарий от {user}",
+            message_template="""
+            Новый комментарий
+
+            Пользователь: {user}
+            К посту: {post}
+            Текст: {body}
+            """,
+            alert=False,
+            context=context,
+        )
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'page_description': 'noindex, nofollow',
+            'page_description_name': 'robots',
+            'title_page': 'Редактирование комментария',
+            'post': self.object.post,  # Добавляем пост в контекст
+        })
+        return context

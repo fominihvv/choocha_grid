@@ -420,20 +420,6 @@ form textarea {
     height: 200px;
 }
 
-button[type="submit"] {
-    align-self: flex-start; /* Кнопка выравнивается по левому краю */
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1em;
-}
-
-button[type="submit"]:hover {
-    background-color: #0056b3;
-}
 
 .form-error {
     color: red;
@@ -442,61 +428,7 @@ button[type="submit"]:hover {
 }
 
 
-.button-like {
-    display: inline-block; /* Ссылка ведёт себя как блочный элемент */
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1em;
-    text-decoration: none; /* Убираем подчёркивание */
-    text-align: center;
-    margin: 5px 2px; /* Отступы между кнопками */
-}
-
-.button-like:hover {
-    background-color: #0056b3;
-    text-decoration: none; /* Убираем подчёркивание при наведении */
-}
-
-/* Красная кнопка */
-.button-danger {
-    padding: 10px 20px;
-    background-color: #dc3545 !important; /* Красный цвет */
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1em;
-    text-decoration: none; /* Убираем подчёркивание */
-    text-align: center;
-    margin: 5px 2px; /* Отступы между кнопками */
-}
-
-.button-danger:hover {
-    background-color: #c82333 !important; /* Тёмно-красный при наведении */
-}
-
-/* Зелёная кнопка */
-.button-success {
-    align-self: flex-start;
-    padding: 10px 20px;
-    background-color: #28a745; /* Зелёный цвет */
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1em;
-    text-decoration: none; /* Убираем подчёркивание */
-    text-align: center;
-    margin: 5px 2px; /* Отступы между кнопками */
-}
-
-.button-success:hover {
-    background-color: #218838 !important; /* Тёмно-зелёный при наведении */
-}
+.
 
 .hidden-field {
     display: none;
@@ -521,3 +453,192 @@ button[type="submit"]:hover {
     border-color: #ebccd1;
 }
 
+/* Стили для комментариев */
+.comments-section {
+    margin-top: 40px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+
+.comment {
+    border-bottom: 1px solid #eee;
+    padding: 15px 0;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 10px 15px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+/* Стили для тела комментария */
+.comment-body {
+    padding: 15px;
+    background-color: #fff;
+    border-bottom: 1px solid #e9ecef;
+    line-height: 1.5;
+}
+
+.comment-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+/* Дополнительные стили для статуса модерации */
+.comment-body small {
+    display: block;
+    margin-top: 10px;
+    color: #dc3545;
+    font-style: italic;
+}
+
+.add-comment textarea {
+    width: 100%;
+    min-height: 100px;
+    margin-bottom: 10px;
+}
+
+/* Стили для сообщений */
+.messages {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.alert {
+    position: relative;
+    padding: 15px 35px 15px 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    opacity: 1;
+    transition: opacity 0.5s;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.close-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+/* кнопки */
+.comment-actions {
+    display: flex;
+    gap: 8px; /* Отступ между кнопками */
+    margin-top: 10px;
+    flex-wrap: wrap; /* Если не хватает места - перенос на новую строку */
+}
+
+.comment-actions a {
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+/* Стандартный стиль (старый) */
+button[type="submit"] {
+    align-self: flex-start;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s;
+}
+
+button[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+/* Компактный стиль (новый) */
+.btn-compact-danger {
+    text-decoration: none;
+    padding: 0.25rem 0.5rem !important; 
+    font-size: 0.875rem !important;
+    line-height: 1.5;
+    border-radius: 0.2rem !important;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    cursor: pointer;
+    color: #fff;
+    background-color: #dc3545 !important; /* Красный цвет */
+    border-color: #dc3545;
+}
+
+
+.btn-compact-green {
+    text-decoration: none;
+    padding: 0.25rem 0.5rem !important; 
+    font-size: 0.875rem !important;
+    line-height: 1.5;
+    border-radius: 0.2rem !important;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    cursor: pointer;
+    color: #fff;
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.btn-compact-blue {
+    text-decoration: none;
+    padding: 0.25rem 0.5rem !important; 
+    font-size: 0.875rem !important;
+    line-height: 1.5;
+    border-radius: 0.2rem !important;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    cursor: pointer;
+    color: #fff;
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+
+.btn-compact:hover {
+    filter: brightness(90%);
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+}
+
+
+
+.btn-danger:hover {
+    background-color: #c82333 !important; /* Тёмно-красный при наведении */
+}
+
+
+/* Эффекты при наведении */
+.comment-actions a:hover {
+    filter: brightness(90%);
+}

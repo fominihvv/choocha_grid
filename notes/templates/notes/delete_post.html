@@ -5,17 +5,17 @@
 {% endblock %}
 {% block content %}
     <h1> {{ title }} </h1>
-
+    {% csrf_token %}
     <form action="" method="post">
-        {% csrf_token %}
-
         <p>Вы действительно хотите удалить пост "{{ post.title }}"?</p>
-        
-        <!-- Красная кнопка "Удалить" -->
-        <button type="submit" class="button-danger">Удалить</button>
-        
-        <!-- Зелёная кнопка "Отмена" -->
-        <a href="{{ post.get_absolute_url }}" class="button-success">Отмена</a>
-
+        <div class="comment-actions">
+            <!-- Зелёная кнопка "Отмена" -->
+            <a href="{{ post.get_absolute_url }}" class="btn btn-sm btn-compact-green">Отмена</a>
+            <!-- Красная кнопка "Удалить" -->
+            <button type="submit" class="btn btn-sm btn-compact-danger">Удалить</button>
+        </div>
     </form>
+
+
+
 {% endblock %}

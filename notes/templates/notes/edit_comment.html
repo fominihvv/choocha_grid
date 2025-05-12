@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="content-container">
+        <h1>Редактирование комментария</h1>
+        <p>К посту: <a href="{{ post.get_absolute_url }}">{{ post.title }}</a></p>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="comment-actions">
+                <a href="{{ post.get_absolute_url }}" class="btn btn-sm btn-compact-blue">Отмена</a>
+                <button type="submit" class="btn btn-sm btn-compact-danger">Изменить</button>
+            </div>
+        </form>
+    </div>
+            
+{% endblock %}

@@ -9,7 +9,8 @@
         {% if tags %}
             <ul class="tags-list">
                 {% for tag in tags %}
-                    <li><a href="{{ tag.get_absolute_url }}" title="Перейти к метке «{{ tag.tag|escape }}»">{{ tag.tag }}</a></li>
+                    <li><a href="{{ tag.get_absolute_url }}"
+                           title="Перейти к метке «{{ tag.tag|escape }}»">{{ tag.tag }}</a></li>
                 {% endfor %}
             </ul>
         {% endif %}
@@ -17,16 +18,18 @@
 
     <div class="actions">
         {% if perms.notes.change_note %}
-            <a href="{{ post.get_update_url }}" title="Изменить статью" class="button-success">Изменить статью</a>
+            <a href="{{ post.get_update_url }}" title="Изменить статью" class="btn btn-sm btn-compact-blue">Изменить
+                статью</a>
         {% endif %}
         <br>
         {% if perms.notes.delete_note %}
-            <a href="{{ post.get_delete_url }}" title="Удалить статью" class="button-danger">Удалить статью</a>
+            <a href="{{ post.get_delete_url }}" title="Удалить статью" class="btn btn-sm btn-compact-danger">Удалить статью</a>
         {% endif %}
     </div>
 {% endblock %}
 
 {% block content %}
+
     <div class="article">
         <h1> {{ title }} </h1>
         {% autoescape off %}
@@ -49,6 +52,85 @@
                 {% endif %}
             </p>
         </div>
+    </div>
+
+    {# Секция комментариев #}
+    <div class="comments-section">
+        <h3>Комментарии ({{ post.comments.count }})</h3>
+
+        {# Список комментариев #}
+        <div class="comments-list">
+            {% for comment in post.comments.all %}
+                {% if comment.active or user.is_staff %}  {# Показываем модераторам все #}
+                    <div class="comment" id="comment-{{ comment.id }}">
+
+                        {# Заголовок комментария #}
+                        <div class="comment-header">
+                            <span class="comment-author">
+                                {% if comment.user.photo %}
+                                    <img src="{{ comment.user.photo.url }}" alt="{{ comment.user.username }}"
+                                         class="comment-avatar">
+                                {% endif %}
+                                {{ comment.user.username }} писал
+                                {{ comment.created|date:"d-m-Y H:i" }}
+                                {% if comment.created|date:"d-m-Y H:i" != comment.updated|date:"d-m-Y H:i" %}
+                                    (изменено: {{ comment.updated|date:"d-m-Y H:i" }})
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        {# Текст комментария #}
+                        <div class="comment-body">
+                            {{ comment.body|linebreaks }}
+
+                            {% if not comment.active %}
+                                <small>(Ожидает модерации)</small>
+                            {% endif %}
+                        </div>
+
+                        {% if user.is_authenticated %}
+                            {# Блок кнопок #}
+                            <div class="comment-actions">
+                                {% if user.is_staff and not comment.active %}
+                                    <a href="{% url 'approve_comment' comment.id %}"
+                                       class="btn btn-sm btn-compact-green">Одобрить</a>
+                                {% endif %}
+
+                                {% if user == comment.user or user.is_superuser %}
+                                    <a href="{% url 'edit_comment' comment.id %}" class="btn btn-sm btn-compact-blue">Редактировать</a>
+                                    <a href="{% url 'delete_comment' comment.id %}"
+                                       class="btn btn-sm btn-compact-danger">Удалить</a>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                    </div>
+                {% endif %}
+            {% empty %}
+                <p>Пока нет комментариев. Будьте первым!</p>
+            {% endfor %}
+        </div>
+
+        {# Форма добавления комментария #}
+        {% if user.is_authenticated %}
+            <div class="comment-form">
+                <div class="comment-actions">
+                    <form method="post" action="{% url 'add_comment' post.slug %}">
+                        {% csrf_token %}
+                        <textarea name="body" placeholder="Напишите ваш комментарий..."></textarea>
+                        <button type="submit" class="btn btn-sm btn-compact-blue">Отправить</button>
+
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <div class="auth-required">
+                <p>Чтобы оставить комментарий, пожалуйста <a
+                        href="{% url 'users:login' %}?next={{ request.path }}">войдите</a> или <a
+                        href="{% url 'users:register' %}">зарегистрируйтесь</a>.
+                </p>
+            </div>
+        {% endif %}
     </div>
 
 {% endblock %}

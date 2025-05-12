@@ -141,3 +141,34 @@ class Note(models.Model):
 
 class UploadFiles(models.Model):
     file = models.FileField(upload_to='uploads_model/', verbose_name='Файл')
+
+
+class Comment(models.Model):
+    post = models.ForeignKey(
+        'Note',
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    user = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    body = models.TextField(verbose_name='Текст комментария')
+    created = models.DateTimeField(auto_now_add=True, verbose_name='Создан')
+    updated = models.DateTimeField(auto_now=True, verbose_name='Обновлён')
+    active = models.BooleanField(default=False, verbose_name='Активен')
+
+    class Meta:
+        ordering = ('created',)
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+
+    def __str__(self):
+        return f'Комментарий {self.user.username} к посту #{self.post.id}'
+
+    def save(self, *args, **kwargs):
+        # Если пользователь — админ/модератор, комментарий сразу активен
+        if self.user.is_staff or self.user.is_superuser:
+            self.active = True
+        super().save(*args, **kwargs)

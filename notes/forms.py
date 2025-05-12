@@ -6,7 +6,7 @@ from django import forms
 from django.utils.deconstruct import deconstructible
 from django.utils.html import strip_tags
 
-from .models import Category, Note
+from .models import Category, Note, Comment
 
 
 @deconstructible
@@ -128,5 +128,34 @@ class ContactForm(forms.Form):
             )
             self.fields['email_hidden'] = forms.EmailField(
                 initial=user.email,
+                widget=forms.HiddenInput()
+            )
+
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['body']  # Только поле для текста комментария
+        widgets = {
+            'body': forms.Textarea(attrs={
+                'rows': 3,
+                'class': 'form-textarea',
+                'placeholder': 'Ваш комментарий...'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)  # Передаём пользователя из view
+        self.post = kwargs.pop('post', None)  # Передаём пост из view
+        super().__init__(*args, **kwargs)
+
+        # Если пользователь авторизован, скрываем ненужные поля
+        if self.user and self.user.is_authenticated:
+            self.fields['body'].label = ''  # Убираем label
+
+        # Добавляем скрытое поле post_id, если пост передан
+        if self.post:
+            self.fields['post'] = forms.CharField(
+                initial=self.post.id,
                 widget=forms.HiddenInput()
             )

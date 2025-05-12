@@ -3,7 +3,7 @@ from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.utils.safestring import mark_safe
 
-from .models import Note, TagPost, Category
+from .models import Note, TagPost, Category, Comment
 
 
 @admin.register(Note)
@@ -56,3 +56,10 @@ class CategoryAdmin(admin.ModelAdmin):
 
 
 admin.site.register(TagPost)
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('user', 'post', 'created', 'active')
+    list_filter = ('active', 'created', 'updated')
+    search_fields = ('user', 'body')

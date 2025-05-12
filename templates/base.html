@@ -9,7 +9,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="{{ page_description_name }}" content="{{ page_description }}">
-    <meta name="yandex-verification" content="6484a7d785eef504" />
+    <meta name="yandex-verification" content="6484a7d785eef504"/>
     <link rel="shortcut icon" href="{% static 'notes/images/favicon.ico' %}" type="image/x-icon">
     <link rel="stylesheet" href="{% static 'notes/css/styles.css' %}">
     <link rel="stylesheet" href="{% static 'notes/css/portable.css' %}">
@@ -24,6 +24,7 @@
 </head>
 <body>
 {% analytical_body_top %}
+
 
 <!-- Основной контейнер -->
 <div class="container">
@@ -124,6 +125,39 @@
         <p>&copy; 2024-2025 Этот сайт - учебный проект, разрабатываемый в рамках изучения фреймворка Django.</p>
     </footer>
 </div>
+
+<!-- Блок для сообщений (уже должен быть в шаблоне) -->
+{% if messages %}
+<div class="messages">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Скрипт для автоматического скрытия -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Скрываем сообщения через 5 секунд
+    setTimeout(function() {
+        var messages = document.querySelectorAll('.alert');
+        messages.forEach(function(message) {
+            message.style.opacity = '0';
+            setTimeout(() => message.remove(), 500); // Плавное удаление
+        });
+    }, 5000);
+
+    // Дополнительно: кнопка закрытия
+    document.querySelectorAll('.alert').forEach(function(alert) {
+        alert.insertAdjacentHTML('beforeend',
+            '<button class="close-btn" onclick="this.parentElement.remove()">×</button>'
+        );
+    });
+});
+</script>
+
 
 {% analytical_body_bottom %}
 </body>

@@ -10,6 +10,7 @@ from django.views.generic import CreateView, UpdateView
 from social_core.utils import first
 
 from choocha import settings
+from notes.utils import send_notification_email
 from users.forms import LoginUserForm, RegisterUserForm, ProfileUserForm, UserPasswordChangeForm
 
 
@@ -34,36 +35,56 @@ class RegisterUser(CreateView):
 
     def form_valid(self, form):
         # Получаем данные из формы
-        username = form.cleaned_data['username']
-        email = form.cleaned_data['email']
-        first_name = form.cleaned_data['first_name']
-        last_name = form.cleaned_data['last_name']
+        # username = form.cleaned_data['username']
+        # email = form.cleaned_data['email']
+        # first_name = form.cleaned_data['first_name']
+        # last_name = form.cleaned_data['last_name']
 
         # Формируем тему и текст письма
-        subject = f"Choocha.ru. Новый пользователь {username}"
-        message = f"""
-        Новый пользователь
-        
-        Логин: {username}
-        Email: {email}
-        Имя: {first_name}
-        Фамилия: {last_name}
-        """
-        # Отправляем письмо
-        try:
-            send_mail(
-                subject,  # Тема письма
-                message,  # Текст письма
-                settings.DEFAULT_FROM_EMAIL,  # От кого (ваш email из настроек)
-                [settings.EMAIL_ADMIN],  # Кому (ваш email из настроек)
-                fail_silently=False,  # Выводить ошибки, если отправка не удалась
-            )
-            # Добавляем сообщение об успехе
-            messages.success(self.request, 'Ваше сообщение успешно отправлено!')
-        except Exception as e:
-            # Добавляем сообщение об ошибке
-            messages.error(self.request, f'Ошибка при отправке письма: {e}')
+        # subject = f"Choocha.ru. Новый пользователь {username}"
+        # message = f"""
+        # Новый пользователь
+        #
+        # Логин: {username}
+        # Email: {email}
+        # Имя: {first_name}
+        # Фамилия: {last_name}
+        # """
+        # # Отправляем письмо
+        # try:
+        #     send_mail(
+        #         subject,  # Тема письма
+        #         message,  # Текст письма
+        #         settings.DEFAULT_FROM_EMAIL,  # От кого (ваш email из настроек)
+        #         [settings.EMAIL_ADMIN],  # Кому (ваш email из настроек)
+        #         fail_silently=False,  # Выводить ошибки, если отправка не удалась
+        #     )
+        #     # Добавляем сообщение об успехе
+        #     messages.success(self.request, 'Ваше сообщение успешно отправлено!')
+        # except Exception as e:
+        #     # Добавляем сообщение об ошибке
+        #     messages.error(self.request, f'Ошибка при отправке письма: {e}')
+        context = {
+            'username': form.cleaned_data['username'],
+            'email': form.cleaned_data['email'],
+            'first_name': form.cleaned_data['first_name'],
+            'last_name': form.cleaned_data['last_name'],
+        }
 
+        send_notification_email(
+            request=self.request,
+            subject_template="Choocha.ru. Новый пользователь {username}",
+            message_template="""
+            Новый пользователь
+
+            Логин: {username}
+            Email: {email}
+            Имя: {first_name}
+            Фамилия: {last_name}
+            """,
+            alert=False,
+            context=context
+        )
         return super().form_valid(form)
 
 
