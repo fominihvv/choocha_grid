@@ -1,5 +1,6 @@
 <!-- choocha\notes\templates\notes\show_post.html -->
 {% extends 'base.html' %}
+{% load static %}
 {% block canonical_url %}
     <link rel="canonical" href="{% url 'post' post.slug %}"/>
 {% endblock %}
@@ -23,7 +24,8 @@
         {% endif %}
         <br>
         {% if perms.notes.delete_note %}
-            <a href="{{ post.get_delete_url }}" title="Удалить статью" class="btn btn-sm btn-compact-danger">Удалить статью</a>
+            <a href="{{ post.get_delete_url }}" title="Удалить статью" class="btn btn-sm btn-compact-danger">Удалить
+                статью</a>
         {% endif %}
     </div>
 {% endblock %}
@@ -43,12 +45,11 @@
                 <a href="{{ post.cat.get_absolute_url }}"
                    title="Перейти к категории «{{ post.cat.name|escape }}»">
                     {{ post.cat.name }}
-                </a> |
-                автор: {{ post.author.username|default:"Автор не известен" }}</p>
+                </a>|автор: {{ post.author.username|default:"Автор не известен" }}</p>
             <p class="last">
                 <i class="fas fa-calendar-alt"></i> Опубликовано: {{ post.time_create|date:"d-m-Y H:i" }}
-                {% if post.time_update|date:"d-m-Y H:i" != post.time_create|date:"d-m-Y H:i" %}
-                    | <i class="fas fa-sync-alt"></i> Обновлено: {{ post.time_update|date:"d-m-Y H:i" }}
+                {% if post.time_update|date:"d-m-Y H:i" != post.time_create|date:"d-m-Y H:i" %}|
+                    <i class="fas fa-sync-alt"></i> Обновлено: {{ post.time_update|date:"d-m-Y H:i" }}
                 {% endif %}
             </p>
         </div>
@@ -56,20 +57,32 @@
 
     {# Секция комментариев #}
     <div class="comments-section">
-        <h3>Комментарии ({{ post.comments.count }})</h3>
+        <h3>Комментарии ({{ post.post_comments.count }})</h3>
 
         {# Список комментариев #}
         <div class="comments-list">
-            {% for comment in post.comments.all %}
-                {% if comment.active or user.is_staff %}  {# Показываем модераторам все #}
+            {% for comment in post.post_comments.all %}
+                {% if comment.status == comment.Status.ACTIVE or user.is_staff or user == comment.user %}
+                    {# Показываем модераторам всё, авторам - активные и свои, остальным только активные #}
                     <div class="comment" id="comment-{{ comment.id }}">
 
                         {# Заголовок комментария #}
                         <div class="comment-header">
                             <span class="comment-author">
                                 {% if comment.user.photo %}
-                                    <img src="{{ comment.user.photo.url }}" alt="{{ comment.user.username }}"
-                                         class="comment-avatar">
+                                    <img src="{{ comment.user.photo.url }}"
+                                         alt="Аватар {{ comment.user.username }}"
+                                         class="comment-avatar"
+                                         width="40"
+                                         height="40"
+                                         loading="lazy">
+                                {% else %}
+                                    <img src="{% static 'users/default.webp' %}"
+                                         alt="Аватар по умолчанию"
+                                         class="comment-avatar"
+                                         width="40"
+                                         height="40"
+                                         loading="lazy">
                                 {% endif %}
                                 {{ comment.user.username }} писал
                                 {{ comment.created|date:"d-m-Y H:i" }}
@@ -83,20 +96,21 @@
                         <div class="comment-body">
                             {{ comment.body|linebreaks }}
 
-                            {% if not comment.active %}
+                            {% if comment.status == comment.Status.ON_MODERATE %}
                                 <small>(Ожидает модерации)</small>
                             {% endif %}
+
                         </div>
 
                         {% if user.is_authenticated %}
                             {# Блок кнопок #}
                             <div class="comment-actions">
-                                {% if user.is_staff and not comment.active %}
+                                {% if user.is_staff and comment.status == comment.Status.ON_MODERATE %}
                                     <a href="{% url 'approve_comment' comment.id %}"
                                        class="btn btn-sm btn-compact-green">Одобрить</a>
                                 {% endif %}
 
-                                {% if user == comment.user or user.is_superuser %}
+                                {% if user == comment.user or user.is_superuser or user.is_staff %}
                                     <a href="{% url 'edit_comment' comment.id %}" class="btn btn-sm btn-compact-blue">Редактировать</a>
                                     <a href="{% url 'delete_comment' comment.id %}"
                                        class="btn btn-sm btn-compact-danger">Удалить</a>
@@ -117,7 +131,9 @@
                 <div class="comment-actions">
                     <form method="post" action="{% url 'add_comment' post.slug %}">
                         {% csrf_token %}
-                        <textarea name="body" placeholder="Напишите ваш комментарий..."></textarea>
+                        <label>
+                            <textarea name="body" placeholder="Напишите ваш комментарий..."></textarea>
+                        </label>
                         <button type="submit" class="btn btn-sm btn-compact-blue">Отправить</button>
 
                     </form>

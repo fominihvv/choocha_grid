@@ -17,6 +17,10 @@ from .models import Note, TagPost, Category, Comment
 from .utils import DataMixin, send_notification_email
 
 
+###################################
+#           Общий блок            #
+###################################
+
 class NoteHome(DataMixin, ListView):
     template_name = 'notes/index.html'
     context_object_name = 'posts'
@@ -31,15 +35,84 @@ class NoteHome(DataMixin, ListView):
         context['page_description_name'] = 'description'
         return self.get_mixin_context(context, title='Главная страница', cat_selected=0)
 
+class AboutView(DataMixin, TemplateView):
+    template_name = 'notes/about.html'
+
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['page_description'] = 'О сайте'
+        context['page_description_name'] = 'description'
+        return self.get_mixin_context(context, title_page='О сайте')
+
+
+class ContactView(DataMixin, FormView):
+    form_class = ContactForm
+    success_url = reverse_lazy('home')
+    template_name = "notes/contact.html"
+
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['page_description'] = 'Обратная связь'
+        context['page_description_name'] = 'description'
+        return self.get_mixin_context(context, title_page='Обратная связь')
+
+    def form_valid(self, form):
+        # Если пользователь аутентифицирован, используем данные из скрытых полей
+        if self.request.user.is_authenticated:
+            name = form.cleaned_data['name_hidden']
+            email = form.cleaned_data['email_hidden']
+        else:
+            # Получаем данные из формы
+            name = form.cleaned_data['name']
+            email = form.cleaned_data['email']
+
+        context_notification = {
+            'subject': "Сообщение из формы обратной связи",
+            'message': f"""
+                Сообщение из формы обратной связи
+
+                Автор: {name}
+                Email: {email}
+                Текст: {form.cleaned_data['content']}
+                """,
+            'additional': {
+            }
+        }
+
+        send_notification_email(
+            request=self.request,
+            context=context_notification,
+            alert=True,
+        )
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        # Восстанавливаем значения полей name и email из скрытых полей
+        if self.request.user.is_authenticated:
+            form.data = form.data.copy()  # Делаем копию данных формы
+            form.data['name'] = form.data.get('name_hidden', '')
+            form.data['email'] = form.data.get('email_hidden', '')
+        return super().form_invalid(form)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+
+###############################
+# Блок для работы со статьями #
+###############################
 
 class ShowPost(DataMixin, DetailView):
+    """ Отображение статьи """
     # model = Notes #Не использовать этот способ, если определен get_queryset
     template_name = 'notes/show_post.html'
     slug_url_kwarg = 'post_slug'
     context_object_name = 'post'
 
     def get_queryset(self) -> QuerySet:
-        return Note.published.all().select_related('cat', 'author').prefetch_related('comments', 'comments__user')
+        return Note.published.all().select_related('cat', 'author').prefetch_related('post_comments', 'post_comments__user')
 
     def get_object(self, queryset: QuerySet = None) -> QuerySet:
         return get_object_or_404(queryset or self.get_queryset(), slug=self.kwargs[self.slug_url_kwarg])
@@ -61,6 +134,7 @@ class ShowPost(DataMixin, DetailView):
 
 
 class NotesCategory(DataMixin, ListView):
+    """ Вывод статей по определённой категории"""
     template_name = 'notes/index.html'
     context_object_name = 'posts'
     paginate_by = 5
@@ -77,6 +151,7 @@ class NotesCategory(DataMixin, ListView):
 
 
 class NotesTags(DataMixin, ListView):
+    """ Вывод статей по определённому тэгу """
     template_name = 'notes/index.html'
     context_object_name = 'posts'
     paginate_by = 5
@@ -130,7 +205,7 @@ class DeletePost(PermissionRequiredMixin, DataMixin, DeleteView):
         if obj.author == self.request.user or self.request.user.is_superuser or self.request.user.is_staff:
             return obj
         else:
-            raise PermissionDenied("You can't delete this post.")
+            raise PermissionDenied("У вас нет прав на удаление статьи")
 
 
 class UpdatePost(PermissionRequiredMixin, DataMixin, UpdateView):
@@ -157,107 +232,68 @@ class UpdatePost(PermissionRequiredMixin, DataMixin, UpdateView):
         post.author = self.request.user
         return super().form_valid(form)
 
-
-class AboutView(DataMixin, TemplateView):
-    template_name = 'notes/about.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['page_description'] = 'О сайте'
-        context['page_description_name'] = 'description'
-        return self.get_mixin_context(context, title_page='О сайте')
-
-
-class ContactView(DataMixin, FormView):
-    form_class = ContactForm
-    success_url = reverse_lazy('home')
-    template_name = "notes/contact.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['page_description'] = 'Обратная связь'
-        context['page_description_name'] = 'description'
-        return self.get_mixin_context(context, title_page='Обратная связь')
-
-    def form_valid(self, form):
-        # Если пользователь аутентифицирован, используем данные из скрытых полей
-        if self.request.user.is_authenticated:
-            name = form.cleaned_data['name_hidden']
-            email = form.cleaned_data['email_hidden']
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        if obj.author == self.request.user or self.request.user.is_superuser or self.request.user.is_staff:
+            return obj
         else:
-            # Получаем данные из формы
-            name = form.cleaned_data['name']
-            email = form.cleaned_data['email']
+            raise PermissionDenied("У вас нет прав на редактирование статьи")
 
-        content = form.cleaned_data['content']
 
-        context = {'name': name, 'email': email, 'content': content}
-        send_notification_email(
-            request=self.request,
-            subject_template="Choocha.ru. Сообщение от {name}",
-            message_template="""
-            Сообщение из формы обратной связи
 
-            От: {name} ({email})
-            Текст: {content}
+###################################
+# Блок для работы с комментариями #
+###################################
+
+class CommentMixin:
+    """Общая логика для работы с комментариями"""
+
+    def _get_comment_notification_context(self, form, action):
+        """Формирование контекста для уведомлений"""
+        return {
+            'subject': f"Комментарий {action}",
+            'message': f"""
+            Комментарий {action}
+
+            Автор: {form.instance.user.username or '-'}
+            Пост: {form.instance.post.title}
+            Текст: {form.cleaned_data['body'][:200]}{'...' if len(form.cleaned_data['body']) > 200 else ''}
             """,
-            alert=True,
-            context=context
-        )
+            'additional': {
+                'post_url': self.request.build_absolute_uri(
+                    reverse('post', kwargs={'post_slug': form.instance.post.slug})),
+                'full_text': form.cleaned_data['body']
+            }
+        }
 
-        return super().form_valid(form)
-
-    def form_invalid(self, form):
-        # Восстанавливаем значения полей name и email из скрытых полей
-        if self.request.user.is_authenticated:
-            form.data = form.data.copy()  # Делаем копию данных формы
-            form.data['name'] = form.data.get('name_hidden', '')
-            form.data['email'] = form.data.get('email_hidden', '')
-        return super().form_invalid(form)
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
+    @staticmethod
+    def _handle_comment_status(form, request):
+        """Обработка статуса комментария"""
+        is_admin = request.user.is_staff or request.user.is_superuser
+        if is_admin:
+            form.instance.status = Comment.Status.ACTIVE
+        messages.success(request, f'Комментарий {"добавлен" if is_admin else "отправлен на модерацию"}')
+        return is_admin
 
 
-class AddCommentView(LoginRequiredMixin, CreateView):
+class AddCommentView(LoginRequiredMixin, CommentMixin, CreateView):
     model = Comment
     form_class = CommentForm
     template_name = 'notes/show_post.html'  # Используем тот же шаблон
 
     def form_valid(self, form):
-        form.instance.user = self.request.user
+        request = self.request
+        form.instance.user = request.user
         form.instance.post = Note.objects.get(slug=self.kwargs['post_slug'])
 
-        # Для админов комментарий сразу активен
-        if self.request.user.is_staff or self.request.user.is_superuser:
-            form.instance.active = True
-            messages.success(self.request, 'Комментарий добавлен')
-        else:
-            messages.success(self.request, 'Комментарий отправлен на модерацию')
-
-        context = {
-            'user': form.instance.user,
-            'post': form.instance.post,
-            'body': form.cleaned_data['body'],
-        }
+        is_admin = self._handle_comment_status(form, request)
 
         send_notification_email(
             request=self.request,
-            subject_template="Choocha.ru. Новый комментарий от {user}",
-            message_template="""
-            Новый комментарий
-
-            Пользователь: {user}
-            К посту: {post}
-            Текст: {body}
-            """,
-            alert=False,
-            context=context
+            context=self._get_comment_notification_context(form, 'добавлен' if is_admin else 'ожидает модерации')
         )
 
-        print(form.cleaned_data, form.instance.user, form.instance.post)
+
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -266,9 +302,10 @@ class AddCommentView(LoginRequiredMixin, CreateView):
 
 class ApproveComment(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
-        return self.request.user.is_staff
+        return self.request.user.is_staff or self.request.user.is_superuser
 
-    def get(self, request, pk):
+    @staticmethod
+    def get(request, pk):
         comment = get_object_or_404(Comment, pk=pk)
         comment.active = True
         comment.save()
@@ -301,7 +338,7 @@ class DeleteComment(LoginRequiredMixin, DeleteView):
         return context
 
 
-class EditComment(LoginRequiredMixin, UpdateView):
+class EditComment(LoginRequiredMixin, CommentMixin, UpdateView):
     model = Comment
     form_class = CommentForm  # Указываем форму для редактирования
     template_name = 'notes/edit_comment.html'
@@ -313,41 +350,22 @@ class EditComment(LoginRequiredMixin, UpdateView):
 
     def get_object(self, queryset=None):
         obj = super().get_object(queryset)
-        # Проверяем права: автор или суперпользователь/модератор
-        if not (obj.user == self.request.user or self.request.user.is_staff or self.request.user.is_superuser):
-            raise PermissionDenied("У вас нет прав на редактирование этого комментария")
-        return obj
+        # Проверяем права: автор, модератор или суперпользователь
+        if obj.user == self.request.user or self.request.user.is_staff or self.request.user.is_superuser:
+            return obj
+        raise PermissionDenied("У вас нет прав на редактирование этого комментария")
 
     def form_valid(self, form):
         # Автоматически обновляем дату редактирования
         form.instance.updated = timezone.now()
 
-        # Для админов комментарий сразу активен
-        if self.request.user.is_staff or self.request.user.is_superuser:
-            messages.success(self.request, 'Комментарий изменён')
-        else:
-            form.instance.active = False
-            messages.success(self.request, 'Комментарий отправлен на модерацию')
-
-        context = {
-            'user': form.instance.user,
-            'post': form.instance.post,
-            'body': form.cleaned_data['body'],
-        }
+        is_admin = self._handle_comment_status(form, self.request)
 
         send_notification_email(
             request=self.request,
-            subject_template="Choocha.ru. Изменён комментарий от {user}",
-            message_template="""
-            Новый комментарий
-
-            Пользователь: {user}
-            К посту: {post}
-            Текст: {body}
-            """,
-            alert=False,
-            context=context,
+            context=self._get_comment_notification_context(form, 'изменён')
         )
+
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):

@@ -9,18 +9,18 @@ from .models import Note, TagPost, Category, Comment
 @admin.register(Note)
 class NotesAdmin(admin.ModelAdmin):
     fields = ('title', 'slug', 'image', 'post_image', 'post_image_size', 'content_short', 'content_full', 'time_create',
-              'time_update', 'cat', 'tags', 'is_published', 'meta_description')
+              'time_update', 'cat', 'tags', 'status', 'meta_description')
     readonly_fields = ('time_create', 'time_update', 'slug', 'post_image', 'post_image_size',)
     list_display = (
-        'title', 'slug', 'time_create', 'time_update', 'cat', 'is_published', 'post_image', 'post_image_size',
+        'title', 'slug', 'time_create', 'time_update', 'cat', 'status', 'post_image', 'post_image_size',
     )
     list_display_links = ('title', 'cat',)
-    ordering = ('time_create', 'title',)
+    ordering = ('-time_update', 'title',)
     search_fields = ('title', 'content_short', 'content_full', 'cat__name',)
-    list_editable = ('is_published',)
+    list_editable = ('status',)
     list_per_page = 5
-    actions = ['set_published', 'set_draft', ]
-    list_filter = ['cat__name', 'is_published', ]
+    actions = ['status', 'set_draft', ]
+    list_filter = ['cat__name', 'status', ]
     save_on_top = True
 
     @staticmethod
@@ -39,12 +39,12 @@ class NotesAdmin(admin.ModelAdmin):
 
     @admin.action(description='Опубликовать выбранные записи')
     def set_published(self, request: HttpRequest, queryset: QuerySet) -> None:
-        count = queryset.update(is_published=Note.Status.PUBLISHED)
+        count = queryset.update(status=Note.Status.PUBLISHED)
         self.message_user(request, f'{count} записей опубликованы')
 
     @admin.action(description='Снять с публикации выбранные записи')
     def set_draft(self, request: HttpRequest, queryset: QuerySet) -> None:
-        count = queryset.update(is_published=Note.Status.DRAFT)
+        count = queryset.update(status=Note.Status.DRAFT)
         self.message_user(request, f'{count} записей сняты с публикации', messages.WARNING)
 
 
@@ -60,6 +60,6 @@ admin.site.register(TagPost)
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ('user', 'post', 'created', 'active')
-    list_filter = ('active', 'created', 'updated')
+    list_display = ('user', 'post', 'created', 'status')
+    list_filter = ('status', 'created', 'updated')
     search_fields = ('user', 'body')

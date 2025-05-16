@@ -10,9 +10,21 @@
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {% if user.photo %}
-            <p><img src="{{ user.photo.url }}" width="200" height="200" alt="Фотография пользователя"></p>
+            <p>
+                <img src="{{ user.photo.url }}"
+                     alt="Аватар {{ user.username }}"
+                     width="200"
+                     height="200"
+                     loading="lazy">
+            </p>
         {% else %}
-            <p><img src="{% get_media_prefix %}/users/default.png" width="200" height="200" alt="Фотографии нет"></p>
+            <p>
+                <img src="{% static 'users/default.webp' %}"
+                     alt="Аватар по умолчанию"
+                     width="200"
+                     height="200"
+                     loading="lazy">
+            </p>
         {% endif %}
         <div class="form-error">{{ form.non_field_errors }}</div>
         {% for field in form %}

@@ -27,7 +27,7 @@ class AddPostForm(forms.ModelForm):
 
     class Meta:
         model = Note
-        fields = ['title', 'content_short', 'content_full', 'image', 'is_published', 'cat', 'tags', 'meta_description']
+        fields = ['title', 'content_short', 'content_full', 'image', 'status', 'cat', 'tags', 'meta_description']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-input'}),
         }
@@ -72,7 +72,7 @@ class UpdatePostForm(forms.ModelForm):
 
     class Meta:
         model = Note
-        fields = ['title', 'content_short', 'content_full', 'image', 'is_published', 'cat', 'tags', 'meta_description']
+        fields = ['title', 'content_short', 'content_full', 'image', 'status', 'cat', 'tags', 'meta_description']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-input'}),
         }

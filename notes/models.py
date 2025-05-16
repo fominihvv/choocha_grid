@@ -1,16 +1,20 @@
+from telnetlib import STATUS
+
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import QuerySet
 from django.shortcuts import reverse
-from django.utils.html import strip_tags
 from django_ckeditor_5.fields import CKEditor5Field
 from django_extensions.db.fields import AutoSlugField
 from slugify import slugify
 
 
 class PublishedManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(is_published=Note.Status.PUBLISHED)
+    def get_queryset(self) -> QuerySet:
+        return super().get_queryset().filter(status=Note.Status.PUBLISHED)
+
+    def get_latest(self) -> QuerySet:
+        return self.get_queryset().order_by('-time_update')
 
 
 class TagPost(models.Model):
@@ -61,9 +65,9 @@ class Note(models.Model):
     class Meta:
         verbose_name = 'Статья'
         verbose_name_plural = 'Статьи'
-        ordering = ['title', '-time_create']
+        ordering = ['-time_update', 'title', ]
         indexes = [
-            models.Index(fields=['title', '-time_create']),
+            models.Index(fields=['-time_update', 'title', ]),
         ]
 
     class Status(models.IntegerChoices):
@@ -100,13 +104,13 @@ class Note(models.Model):
     )
     time_create = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     time_update = models.DateTimeField(auto_now=True, verbose_name='Дата последнего изменения')
-    is_published = models.BooleanField(
-        choices=tuple(map(lambda x: (bool(x[0]), x[1]), Status.choices)),
+    status = models.IntegerField(
+        choices=Status.choices,
         default=Status.DRAFT,
-        verbose_name='Опубликовано'
+        verbose_name='Статус публикации',
     )
     cat = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='posts', verbose_name='Категория')
-    tags = models.ManyToManyField(TagPost, blank=True, related_name='notes', verbose_name='Метки')
+    tags = models.ManyToManyField(TagPost, blank=True, related_name='posts', verbose_name='Метки')
     author = models.ForeignKey(
         get_user_model(),
         on_delete=models.SET_NULL,
@@ -121,7 +125,6 @@ class Note(models.Model):
         null=True,
         verbose_name='Метаописание'
     )
-
 
     objects = models.Manager()
     published = PublishedManager()
@@ -144,31 +147,45 @@ class UploadFiles(models.Model):
 
 
 class Comment(models.Model):
-    post = models.ForeignKey(
-        'Note',
-        on_delete=models.CASCADE,
-        related_name='comments'
-    )
-    user = models.ForeignKey(
-        get_user_model(),
-        on_delete=models.CASCADE,
-        related_name='comments'
-    )
-    body = models.TextField(verbose_name='Текст комментария')
-    created = models.DateTimeField(auto_now_add=True, verbose_name='Создан')
-    updated = models.DateTimeField(auto_now=True, verbose_name='Обновлён')
-    active = models.BooleanField(default=False, verbose_name='Активен')
-
     class Meta:
         ordering = ('created',)
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
 
-    def __str__(self):
-        return f'Комментарий {self.user.username} к посту #{self.post.id}'
+    class Status(models.IntegerChoices):
+        ACTIVE = 0, "Опубликован"
+        ON_MODERATE = 1, "На модерации"
+        DELETED = 2, "Удалён"
+        HIDE = 3, "Скрыт"
 
-    def save(self, *args, **kwargs):
+    post = models.ForeignKey(
+        'Note',
+        on_delete=models.CASCADE,
+        related_name='post_comments'
+    )
+    user = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.CASCADE,
+        related_name='user_comments'
+    )
+    body = models.TextField(verbose_name='Текст комментария')
+    created = models.DateTimeField(auto_now_add=True, verbose_name='Создан')
+    updated = models.DateTimeField(auto_now=True, verbose_name='Обновлён')
+    status = models.IntegerField(
+        choices=Status.choices,
+        default=Status.ON_MODERATE,
+        verbose_name='Статус комментария',
+    )
+
+
+    def __str__(self) -> str:
+        username = getattr(self.user, 'username', 'Аноним')
+        return f'Комментарий {username} к посту #{self.post.id}'
+
+    def save(self, *args, **kwargs) -> None:
         # Если пользователь — админ/модератор, комментарий сразу активен
-        if self.user.is_staff or self.user.is_superuser:
-            self.active = True
+        is_staff = getattr(self.user, 'is_staff')
+        is_superuser = getattr(self.user, 'is_superuser')
+        if is_staff or is_superuser:
+            self.status = Comment.Status.ACTIVE
         super().save(*args, **kwargs)

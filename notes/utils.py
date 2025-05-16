@@ -1,7 +1,10 @@
+import pytz
 from django.contrib import messages
 from django.core.mail import send_mail
+from django.utils import timezone
 
 from choocha import settings
+from django.utils.html import escape
 
 
 class DataMixin:
@@ -16,36 +19,71 @@ class DataMixin:
         context.update({**kwargs})
         return context
 
+def format_additional_data(additional_data, max_length=100) -> str:
+    """Безопасное форматирование дополнительных данных"""
+    return '\n'.join(
+        f"{escape(str(key))[:max_length]}{"...[кусь]" if len(escape(str(key))) > max_length else ''}"
+        f": {escape(str(value))[:max_length]}{"...[кусь]" if len(escape(str(value))) > max_length else ''}"
+        for key, value in additional_data.items()
+    )
 
-def send_notification_email(request, subject_template, message_template, context, email_to=None, alert=True):
+
+def send_notification_email(request, context, email_to=None, alert=False) -> None:
     """
-    Универсальная функция для отправки уведомлений по email.
+    Универсальная функция отправки уведомлений
 
-    :param request: HttpRequest объект для messages
-    :param subject_template: Шаблон темы письма (используется .format(**context))
-    :param message_template: Шаблон текста письма (используется .format(**context))
-    :param context: Словарь с данными для подстановки в шаблоны
-    :param email_to: Список email-адресов получателей (по умолчанию EMAIL_ADMIN)
-    :param alert: True/ False показывать уведомление об отправке или нет
+    :param request: HttpRequest
+    :param context: {
+        'subject': str - тема письма,
+        'message': str - текст письма,
+        'user': User - объект пользователя,
+        'additional': dict - доп. данные
+    }
+    :param email_to: list - получатели (по умолчанию EMAIL_ADMIN)
+    :param alert: bool - показывать уведомления пользователю
     """
     if email_to is None:
         email_to = [settings.EMAIL_ADMIN]
 
+    # Базовые метаданные
+    current_tz = pytz.timezone(settings.TIME_ZONE)
+    base_context = {
+        'ip': request.META.get('REMOTE_ADDR', 'неизвестен'),
+        'user_agent': request.META.get('HTTP_USER_AGENT', 'неизвестен'),
+        'timestamp': timezone.now().astimezone(current_tz).strftime('%d.%m.%Y %H:%M'),
+    }
+
+
     try:
-        subject = subject_template.format(**context)
-        message = message_template.format(**context)
+        # Форматирование сообщения
+        add_info = format_additional_data(context.get('additional', {}))
+
+        full_message = f"""
+        {context['message']}
+
+        Техническая информация:
+        - Время: {base_context['timestamp']}
+        - IP-адрес: {base_context['ip']}
+        - Устройство: {base_context['user_agent']}
+        
+*дополнительная информация:
+{add_info if add_info else 'Отсутствует'}
+        """
 
         send_mail(
-            subject=subject,
-            message=message,
+            subject=f"Choocha.ru - {context['subject']}",
+            message=full_message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=email_to,
-            fail_silently=False,
+            fail_silently=False
         )
+
+
         if alert:
-            messages.success(request, 'Уведомление успешно отправлено!')
+            messages.success(request, 'Уведомление отправлено')
         return True
+
     except Exception as e:
         if alert:
-            messages.error(request, f'Ошибка при отправке письма: {e}')
+            messages.error(request, f'Ошибка отправки: {e}')
         return False
