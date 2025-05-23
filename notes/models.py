@@ -1,5 +1,3 @@
-from telnetlib import STATUS
-
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import QuerySet
@@ -176,7 +174,6 @@ class Comment(models.Model):
         default=Status.ON_MODERATE,
         verbose_name='Статус комментария',
     )
-
 
     def __str__(self) -> str:
         username = getattr(self.user, 'username', 'Аноним')

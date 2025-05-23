@@ -11,3 +11,4 @@ def e_handler404(request, exception):
 
 def e_handler500(request):
     return render(request, 'notes/500.html', status=500)
+
