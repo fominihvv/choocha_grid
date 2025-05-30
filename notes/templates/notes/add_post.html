@@ -8,7 +8,6 @@
 {% if robots %}
     {# Служебная страница - только минимальная разметка #}
     {% block robots %}{{ robots }}{% endblock %}
-    {% block og_type %}website{% endblock %} {# Минимальный OG для соцсетей #}
 {% else %}
     {# Публичная страница - полная SEO-разметка #}
     {% block page_description %}{{ page_description|default:"Информационный сайт choocha.ru"|truncatechars:160}}{% endblock %}
