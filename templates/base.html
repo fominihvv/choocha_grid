@@ -1,30 +1,58 @@
+{% load static %}
+{% load show_categories_tags_lastposts %}
+{% load analytical %}
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    {% load static %}
-    {% load show_categories_tags_lastposts %}
-    {% load analytical %}
-    {% analytical_head_top %}
-    <title>{{ title }}</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>{% block page_title %}choocha.ru | Главная страница проекта{% endblock %}</title>
+
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="{{ page_description_name }}" content="{{ page_description }}">
+    <meta name="description" content="{% block page_description %}Pet проект по изучению Django{% endblock %}">
     <meta name="yandex-verification" content="6484a7d785eef504"/>
+    <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
+    <meta name="content-type" content="text/html; charset=utf-8">
     <link rel="shortcut icon" href="{% static 'notes/images/favicon.ico' %}" type="image/x-icon">
-    <link rel="stylesheet" href="{% static 'notes/css/styles.css' %}">
+
+    <!-- CSS с preload -->
+    <link rel="preload" href="{% static 'notes/css/styles.css' %}" as="style" onload="this.rel='stylesheet'">
     <link rel="stylesheet" href="{% static 'notes/css/portable.css' %}">
     <link rel="stylesheet" href="{% static 'notes/css/ckeditor5-content.css' %}">
-    {% block canonical_url %}
-        <link rel="canonical" href="https://choocha.ru/"/>
+
+    <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}"/>
+
+
+    {% block microdata %}
+        <!-- Микроразметка WebSite по умолчанию -->
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "website",
+            "name": "choocha.ru",
+            "url": "https://choocha.ru",
+        }
+        </script>
     {% endblock %}
-    {% block meta %}
-        <!-- Блок для дополнительных метатегов -->
+
+    <!-- Блок для специфичных OpenGraph-тегов -->
+    {% block og_meta %}
+        <meta property="og:title" content="{% block og_title %}Choocha.ru{% endblock %}">
+        <meta property="og:description" content="{% block og_description %}Pet проект по изучению Django{% endblock %}">
+        <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}">
+        <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+        <meta property="og:image" content="{% block og_image %}{% static 'images/default_og.png' %}{% endblock %}">
+        <meta property="og:image:width" content="{% block og_image_width %}1200{% endblock %}">
+        <meta property="og:image:height" content="{% block og_image_height %}630{% endblock %}">
     {% endblock %}
-    {% analytical_head_bottom %}
+
+    {% analytical_head_bottom %}  <!-- Аналитика перед </head> -->
+
 </head>
+
+
 <body>
 {% analytical_body_top %}
-
 
 <!-- Основной контейнер -->
 <div class="container">
@@ -128,34 +156,34 @@
 
 <!-- Блок для сообщений (уже должен быть в шаблоне) -->
 {% if messages %}
-<div class="messages">
-    {% for message in messages %}
-    <div class="alert alert-{{ message.tags }}">
-        {{ message }}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-</div>
 {% endif %}
 
 <!-- Скрипт для автоматического скрытия -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Скрываем сообщения через 5 секунд
-    setTimeout(function() {
-        var messages = document.querySelectorAll('.alert');
-        messages.forEach(function(message) {
-            message.style.opacity = '0';
-            setTimeout(() => message.remove(), 500); // Плавное удаление
-        });
-    }, 5000);
+    document.addEventListener('DOMContentLoaded', function () {
+        // Скрываем сообщения через 5 секунд
+        setTimeout(function () {
+            var messages = document.querySelectorAll('.alert');
+            messages.forEach(function (message) {
+                message.style.opacity = '0';
+                setTimeout(() => message.remove(), 500); // Плавное удаление
+            });
+        }, 5000);
 
-    // Дополнительно: кнопка закрытия
-    document.querySelectorAll('.alert').forEach(function(alert) {
-        alert.insertAdjacentHTML('beforeend',
-            '<button class="close-btn" onclick="this.parentElement.remove()">×</button>'
-        );
+        // Дополнительно: кнопка закрытия
+        document.querySelectorAll('.alert').forEach(function (alert) {
+            alert.insertAdjacentHTML('beforeend',
+                '<button class="close-btn" onclick="this.parentElement.remove()">×</button>'
+            );
+        });
     });
-});
 </script>
 
 

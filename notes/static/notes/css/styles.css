@@ -339,47 +339,6 @@ body {
 }
 
 
-.content-error {
-    color: #231f20;
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 0 0 50px;
-}
-
-.content-error__wrapper {
-    max-width: 650px;
-    padding: 0 10px;
-}
-
-.epic-error-img {
-    text-align: center;
-}
-
-.epic-error-code {
-    font-size: 100px;
-    color: #63B0F5;
-}
-
-.epic-error-text {
-    font-size: 38px;
-    font-weight: bold;
-}
-
-.epic-error-text p {
-    font-size: 24px;
-    padding-top: 10px;
-}
-
-.epic-link {
-    font-size: 18px;
-    line-height: 1.5;
-    margin-top: 20px;
-}
-
-.epic-link a {
-    color: #66cc66;
-    text-decoration: none;
-}
 
 /* Стили для формы */
 form {
@@ -642,3 +601,146 @@ button[type="submit"]:hover {
 .comment-actions a:hover {
     filter: brightness(90%);
 }
+
+
+/* Основные стили страницы "О проекте" */
+.about-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-subtitle {
+    color: #666;
+    font-size: 1.2rem;
+}
+
+.about-section {
+    margin-bottom: 3rem;
+}
+
+.section-title {
+    border-bottom: 2px solid #eee;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Стили для технологического стека */
+.tech-stack {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.tech-category {
+    background: #f9f9f9;
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+.tech-title {
+    color: #2c3e50;
+    margin-top: 0;
+}
+
+/* Стили для timeline */
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 2rem;
+}
+
+.timeline-date {
+    font-weight: bold;
+    color: #3498db;
+}
+
+/* Новые стили для ошибок 403\404\500 */
+/* Стили для страниц ошибок */
+.error-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    padding: 2rem;
+    text-align: center;
+}
+
+.error-content {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.error-code {
+    font-size: 6rem;
+    font-weight: bold;
+    color: #e74c3c;
+    line-height: 1;
+    margin-bottom: 1rem;
+}
+
+.error-title {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: #2c3e50;
+}
+
+.error-message {
+    font-size: 1.2rem;
+    color: #7f8c8d;
+    margin-bottom: 2rem;
+}
+
+.error-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn {
+    display: inline-block;
+    padding: 0.8rem 1.5rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+}
+
+.btn-secondary {
+    border: 1px solid #3498db;
+    color: #3498db;
+}
+
+.btn-secondary:hover {
+    background-color: #f8f9fa;
+}
+
+.error-debug {
+    margin-top: 3rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    text-align: left;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+

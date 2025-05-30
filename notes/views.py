@@ -1,40 +1,26 @@
 from typing import Any
 
-from bs4 import BeautifulSoup
+
 from django.contrib import messages
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-    LoginRequiredMixin,
-    UserPassesTestMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
-from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.http import HttpResponseRedirect, HttpResponse, HttpRequest
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from django.views import View
-from django.views.generic import (
-    TemplateView,
-    ListView,
-    DetailView,
-    CreateView,
-    DeleteView,
-    UpdateView,
-    FormView,
-)
-
+from django.views.generic import TemplateView, ListView, DetailView, CreateView, DeleteView, UpdateView, FormView
 from .forms import AddPostForm, UpdatePostForm, ContactForm, CommentForm
 from .models import Note, TagPost, Category, Comment
-from .utils import DataMixin, send_notification_email
+from .utils import PaginationMixin, send_notification_email, AddPageDescriptionMixin
 
 
 ###################################
 #           Общий блок            #
 ###################################
 
-
-class NoteHome(DataMixin, ListView):
+class IndexView(PaginationMixin, ListView):
     template_name = "notes/index.html"
     context_object_name = "posts"
     paginate_by = 5
@@ -44,33 +30,54 @@ class NoteHome(DataMixin, ListView):
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context["page_description"] = "Домашняя страница"
-        context["page_description_name"] = "description"
-        return self.get_mixin_context(context, title="Главная страница", cat_selected=0)
+        context["page_title"] = "choocha.ru | Главная страница проекта"
+        context["page_description"] = "choocha.ru | Главная страница проекта. Все статьи."
+        context["cat_selected"] = 0
+        context["content_type"] = 'website'
+        context["canonical_url"] = self.request.build_absolute_uri(reverse('home'))
+        context["og_title"] = context["page_title"]
+        context["og_description"] = context["page_description"]
+        context["og_type"] = context["content_type"]
+        return self.get_paginator_context(context)
 
 
-class AboutView(DataMixin, TemplateView):
+class AboutView(TemplateView):
     template_name = "notes/about.html"
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context["page_description"] = "О сайте"
-        context["page_description_name"] = "description"
-        return self.get_mixin_context(context, title_page="О сайте")
+        context["page_title"] = "О сайте. Контакты. Ссылки."
+        context["page_description"] = (
+            "Данный сайт представляет собой полноценное веб-приложение, разработанное на Django"
+            " с использованием современных DevOps-практик. Проект реализован как учебный, "
+            "но с промышленным уровнем развертывания.")
+        context["article_title"] = "О сайте"
+        context["content_type"] = 'webpage'
+        context["canonical_url"] = self.request.build_absolute_uri(reverse('about'))
+        context["og_title"] = context["page_title"]
+        context["og_description"] = context["page_description"]
+        context["og_type"] = context["content_type"]
+        return context
 
 
-class ContactView(DataMixin, FormView):
+class ContactView(FormView):
     form_class = ContactForm
     success_url = reverse_lazy("home")
     template_name = "notes/contact.html"
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
+        context["page_title"] = "Обратная связь"
         context["page_description"] = "Обратная связь"
-        context["page_description_name"] = "description"
-        return self.get_mixin_context(context, title_page="Обратная связь")
+        context["article_title"] = "Обратная связь"
+        context["content_type"] = 'webpage'
+        context["canonical_url"] = self.request.build_absolute_uri(reverse('contact'))
+        context["og_title"] = context["page_title"]
+        context["og_description"] = context["page_description"]
+        context["og_type"] = context["content_type"]
+        return context
 
-    def form_valid(self, form):
+    def form_valid(self, form: ContactForm) -> HttpResponse:
         # Если пользователь аутентифицирован, используем данные из скрытых полей
         if self.request.user.is_authenticated:
             name = form.cleaned_data["name_hidden"]
@@ -99,7 +106,7 @@ class ContactView(DataMixin, FormView):
         )
         return super().form_valid(form)
 
-    def form_invalid(self, form):
+    def form_invalid(self, form: ContactForm) -> HttpResponse:
         # Восстанавливаем значения полей name и email из скрытых полей
         if self.request.user.is_authenticated:
             form.data = form.data.copy()  # Делаем копию данных формы
@@ -107,7 +114,7 @@ class ContactView(DataMixin, FormView):
             form.data["email"] = form.data.get("email_hidden", "")
         return super().form_invalid(form)
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict[str, Any]:
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         return kwargs
@@ -118,7 +125,7 @@ class ContactView(DataMixin, FormView):
 ###############################
 
 
-class ShowPost(DataMixin, DetailView):
+class ShowPost(AddPageDescriptionMixin, DetailView):
     """Отображение статьи"""
 
     # model = Notes #Не использовать этот способ, если определен get_queryset
@@ -142,23 +149,19 @@ class ShowPost(DataMixin, DetailView):
         context = super().get_context_data(**kwargs)
 
         post = context["post"]  # получаем пост из контекста
-        if post.meta_description and post.meta_description.strip():
-            context["page_description"] = post.meta_description
-        else:
-            soup = BeautifulSoup(
-                post.content_short, features="html5lib"
-            )  # Используем lxml для обработки HTML
-            clean_text = soup.get_text(
-                strip=True
-            )  # Извлекаем текст и убираем лишние пробелы
-            context["page_description"] = clean_text[:160]
-            context["page_description_name"] = "description"
-
+        context["page_title"] = f"Choocha.ru | {post.title.strip()}" if post.title else "Choocha.ru | Статья без названия"
+        context["page_description"] = f"Просмотр статьи: {self.get_post_description(post)}"
+        context["article_title"] = post.title.strip() if post.title else "Статья без названия"
         context["comment_form"] = CommentForm()
-        return self.get_mixin_context(context, title=context["post"].title)
+        context["content_type"] = 'article'
+        context["canonical_url"] = post.get_absolute_url()
+        context["og_title"] = context["page_title"]
+        context["og_description"] = context["page_description"]
+        context["og_type"] = context["content_type"]
+        return context
 
 
-class NotesCategory(DataMixin, ListView):
+class ShowPostByCategory(PaginationMixin, ListView):
     """Вывод статей по определённой категории"""
 
     template_name = "notes/index.html"
@@ -172,15 +175,26 @@ class NotesCategory(DataMixin, ListView):
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        category = get_object_or_404(Category, slug=self.kwargs["cat_slug"])
-        context["page_description"] = f"Все статьи из категории {category.name}"
-        context["page_description_name"] = "description"
-        return self.get_mixin_context(
-            context, cat_selected=category.pk, title="Категория: " + category.name
-        )
+        slug = self.kwargs["cat_slug"]
+        category = get_object_or_404(Category, slug=slug)
+
+        # Если slug в URL не совпадает с текущим slug категории (например, после переименования)
+        if category.slug != slug:
+            return redirect('category', cat_slug=category.slug, permanent=True)
+
+        context["page_title"] = "choocha.ru | Главная страница проекта"
+        context["page_description"] = f"choocha.ru | Все статьи из категории {category.name}"
+        context["article_title"] = f"Все статьи из категории {category.name}"
+        context["cat_selected"] = category.pk
+        context["content_type"] = 'website'
+        context['canonical_url'] = self.request.build_absolute_uri(category.get_absolute_url())
+        context["og_title"] = context["page_title"]
+        context["og_description"] = context["page_description"]
+        context["og_type"] = context["content_type"]
+        return self.get_paginator_context(context)
 
 
-class NotesTags(DataMixin, ListView):
+class ShowPostByTag(PaginationMixin, ListView):
     """Вывод статей по определённому тэгу"""
 
     template_name = "notes/index.html"
@@ -194,13 +208,25 @@ class NotesTags(DataMixin, ListView):
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        tag = get_object_or_404(TagPost, slug=self.kwargs["tag_slug"])
-        context["page_description"] = f"Все статьи с тэгом {tag.tag}"
-        context["page_description_name"] = "description"
-        return self.get_mixin_context(context, title="Тег: " + tag.tag)
+        slug = self.kwargs["tag_slug"]
+        tag = get_object_or_404(TagPost, slug=slug)
+
+        # Если slug в URL не совпадает с текущим slug категории (например, после переименования)
+        if tag.slug != slug:
+            return redirect('category', cat_slug=tag.slug, permanent=True)
+
+        context["page_title"] = "choocha.ru | Главная страница проекта"
+        context["page_description"] = f"choocha.ru | Все статьи с меткой {tag.tag}"
+        context["article_title"] = f"Все статьи с меткой {tag.tag}"
+        context["content_type"] = 'website'
+        context['canonical_url'] = self.request.build_absolute_uri(tag.get_absolute_url())
+        context["og_title"] = context["page_title"]
+        context["og_description"] = context["page_description"]
+        context["og_type"] = context["content_type"]
+        return self.get_paginator_context(context)
 
 
-class AddPost(PermissionRequiredMixin, DataMixin, CreateView):
+class AddPost(PermissionRequiredMixin, CreateView):
     template_name = "notes/add_post.html"
     form_class = AddPostForm
     success_url = reverse_lazy("home")
@@ -209,17 +235,19 @@ class AddPost(PermissionRequiredMixin, DataMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["page_description"] = "noindex, nofollow"
-        context["page_description_name"] = "robots"
-        return self.get_mixin_context(context, title_page="Добавление статьи")
+        context["page_title"] = "choocha.ru | Добавление новой статьи"
+        context["article_title"] = "Добавление статьи"
+        context["robots"] = 'noindex,nofollow'
+        context["canonical_url"] = self.request.build_absolute_uri(reverse('add_post'))
+        return context
 
-    def form_valid(self, form):
+    def form_valid(self, form: AddPostForm) -> HttpResponse:
         post = form.save(commit=False)
         post.author = self.request.user
         return super().form_valid(form)
 
 
-class DeletePost(PermissionRequiredMixin, DataMixin, DeleteView):
+class DeletePost(PermissionRequiredMixin, DeleteView):
     model = Note
     template_name = "notes/delete_post.html"
     context_object_name = "post"
@@ -227,25 +255,30 @@ class DeletePost(PermissionRequiredMixin, DataMixin, DeleteView):
     login_url = reverse_lazy("users:login")
     permission_required = ("notes.delete_note",)
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context["page_description"] = "noindex, nofollow"
-        context["page_description_name"] = "robots"
-        return self.get_mixin_context(context, title_page="Удаление статьи")
+        post = context["post"]
+        context["page_title"] = f"choocha.ru | Удаление статьи {post.title.strip()}"
+        context["article_title"] = "Удаление статьи"
+        context["robots"] = 'noindex,nofollow'
+        context["canonical_url"] = self.request.build_absolute_uri(
+            reverse('delete_post', kwargs={'pk': self.get_object().pk})
+        )
+        return context
 
-    def get_object(self, queryset=None):
+    def get_object(self, queryset: QuerySet = None) -> object:
         obj = super().get_object(queryset)
         if (
-            obj.author == self.request.user
-            or self.request.user.is_superuser
-            or self.request.user.is_staff
+                obj.author == self.request.user
+                or self.request.user.is_superuser
+                or self.request.user.is_staff
         ):
             return obj
         else:
             raise PermissionDenied("У вас нет прав на удаление статьи")
 
 
-class UpdatePost(PermissionRequiredMixin, DataMixin, UpdateView):
+class UpdatePost(PermissionRequiredMixin, UpdateView):
     template_name = "notes/update_post.html"
     form_class = UpdatePostForm
     success_url = reverse_lazy(
@@ -255,32 +288,38 @@ class UpdatePost(PermissionRequiredMixin, DataMixin, UpdateView):
     permission_required = ("notes.change_note",)
     context_object_name = "post"
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         if self.request.user.is_superuser or self.request.user.is_staff:
             return Note.objects.all()  # Администраторы видят все статьи
         return Note.objects.filter(author=self.request.user)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["page_description"] = "noindex, nofollow"
-        context["page_description_name"] = "robots"
-        return self.get_mixin_context(context, title_page="Редактирование статьи")
-
-    def form_valid(self, form):
+    def form_valid(self, form: UpdatePostForm) -> HttpResponse:
         post = form.save(commit=False)
         post.author = self.request.user
         return super().form_valid(form)
 
-    def get_object(self, queryset=None):
+    def get_object(self, queryset: QuerySet=None) -> object:
         obj = super().get_object(queryset)
         if (
-            obj.author == self.request.user
-            or self.request.user.is_superuser
-            or self.request.user.is_staff
+                obj.author == self.request.user
+                or self.request.user.is_superuser
+                or self.request.user.is_staff
         ):
             return obj
         else:
             raise PermissionDenied("У вас нет прав на редактирование статьи")
+
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+
+        post = context["post"]  # получаем пост из контекста
+        context["page_title"] = f"choocha.ru | Редактирование статьи: {post.title.strip()}"
+        context["article_title"] = "Редактирование статьи"
+        context["robots"] = 'noindex,nofollow'
+        context["canonical_url"] = self.request.build_absolute_uri(
+            reverse('update_post', kwargs={'pk': post.pk})
+        )
+        return context
 
 
 ###################################
@@ -291,7 +330,7 @@ class UpdatePost(PermissionRequiredMixin, DataMixin, UpdateView):
 class CommentMixin:
     """Общая логика для работы с комментариями"""
 
-    def _get_comment_notification_context(self, form, action):
+    def _get_comment_notification_context(self, form: CommentForm, action: str) -> dict[str, Any]:
         """Формирование контекста для уведомлений"""
         return {
             "subject": f"Комментарий {action}",
@@ -311,7 +350,7 @@ class CommentMixin:
         }
 
     @staticmethod
-    def _handle_comment_status(form, request):
+    def _handle_comment_status(form: CommentForm, request: HttpRequest) -> bool:
         """Обработка статуса комментария"""
         is_admin = request.user.is_staff or request.user.is_superuser
         if is_admin:
@@ -328,7 +367,7 @@ class AddCommentView(LoginRequiredMixin, CommentMixin, CreateView):
     form_class = CommentForm
     template_name = "notes/show_post.html"  # Используем тот же шаблон
 
-    def form_valid(self, form):
+    def form_valid(self, form: CommentForm) -> HttpResponse:
         request = self.request
         form.instance.user = request.user
         form.instance.post = Note.objects.get(slug=self.kwargs["post_slug"])
@@ -344,19 +383,18 @@ class AddCommentView(LoginRequiredMixin, CommentMixin, CreateView):
 
         return super().form_valid(form)
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return (
-            reverse_lazy("post", kwargs={"post_slug": self.object.post.slug})
-            + f"#comment-{self.object.id}"
+                reverse_lazy("post", kwargs={"post_slug": self.object.post.slug})
+                + f"#comment-{self.object.id}"
         )
 
 
 class ApproveComment(LoginRequiredMixin, UserPassesTestMixin, View):
-    def test_func(self):
+    def test_func(self) -> bool:
         return self.request.user.is_staff or self.request.user.is_superuser
 
-    @staticmethod
-    def get(request, pk):
+    def get(self, request: HttpRequest, pk: int) -> HttpResponse:
         comment = get_object_or_404(Comment, pk=pk)
         comment.active = True
         comment.save()
@@ -372,25 +410,29 @@ class DeleteComment(LoginRequiredMixin, DeleteView):
     template_name = "notes/delete_comment.html"
     context_object_name = "comment"
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return reverse_lazy("post", kwargs={"post_slug": self.object.post.slug})
 
-    def get_object(self, queryset=None):
+    def get_object(self, queryset: QuerySet=None) -> QuerySet:
         obj = super().get_object(queryset)
         # Проверяем права: автор, модератор или суперпользователь
         if (
-            obj.user == self.request.user
-            or self.request.user.is_staff
-            or self.request.user.is_superuser
+                obj.user == self.request.user
+                or self.request.user.is_staff
+                or self.request.user.is_superuser
         ):
             return obj
         raise PermissionDenied("У вас нет прав на удаление этого комментария")
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context["page_description"] = "noindex, nofollow"
-        context["page_description_name"] = "robots"
-        context["title_page"] = "Удаление комментария"
+        context["post"] = self.object.post
+        context["page_title"] = "choocha.ru | Удаление комментария"
+        context["article_title"] = "Удаление комментария"
+        context["robots"] = 'noindex,nofollow'
+        context["canonical_url"] = self.request.build_absolute_uri(
+            reverse('delete_comment', kwargs={'pk': self.object.pk})
+        )
         return context
 
 
@@ -400,30 +442,30 @@ class EditComment(LoginRequiredMixin, CommentMixin, UpdateView):
     template_name = "notes/edit_comment.html"
     context_object_name = "comment"
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         # Добавляем якорь к комментарию для удобства
         return (
-            reverse_lazy("post", kwargs={"post_slug": self.object.post.slug})
-            + f"#comment-{self.object.id}"
+                reverse_lazy("post", kwargs={"post_slug": self.object.post.slug})
+                + f"#comment-{self.object.id}"
         )
 
-    def get_object(self, queryset=None):
+    def get_object(self, queryset: QuerySet=None) -> QuerySet:
         obj = super().get_object(queryset)
         # Проверяем права: автор, модератор или суперпользователь
         if (
-            obj.user == self.request.user
-            or self.request.user.is_staff
-            or self.request.user.is_superuser
+                obj.user == self.request.user
+                or self.request.user.is_staff
+                or self.request.user.is_superuser
         ):
             return obj
 
         raise PermissionDenied("У вас нет прав на редактирование этого комментария")
 
-    def form_valid(self, form):
+    def form_valid(self, form: CommentForm) -> HttpResponse:
         # Автоматически обновляем дату редактирования
         form.instance.updated = timezone.now()
 
-        is_admin = self._handle_comment_status(form, self.request)
+        self._handle_comment_status(form, self.request)
 
         send_notification_email(
             request=self.request,
@@ -432,15 +474,13 @@ class EditComment(LoginRequiredMixin, CommentMixin, UpdateView):
 
         return super().form_valid(form)
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "page_description": "noindex, nofollow",
-                "page_description_name": "robots",
-                "title_page": "Редактирование комментария",
-                "post": self.object.post,  # Добавляем пост в контекст
-            }
+        context["post"] = self.object.post
+        context["page_title"] = "choocha.ru | Редактирование комментария"
+        context["article_title"] = "Редактирование комментария"
+        context["robots"] = 'noindex,nofollow'
+        context["canonical_url"] = self.request.build_absolute_uri(
+            reverse('edit_comment', kwargs={'pk': self.object.pk})
         )
-
         return context

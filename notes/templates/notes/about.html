@@ -1,124 +1,111 @@
-<!-- choocha\notes\templates\choocha\about.html -->
 {% extends 'base.html' %}
-{% block canonical_url %}
-    <link rel="canonical" href="{% url 'about' %}"/>
-{% endblock %}
+{% load static %}
+
+{# Обязательные элементы #}
+{% block page_title %}{{ page_title|default:"choocha.ru" }}{% endblock %}
+{% block canonical_url %}{{ canonical_url }}{% endblock %}
+
+{% if robots %}
+    {# Служебная страница - только минимальная разметка #}
+    {% block robots %}{{ robots }}{% endblock %}
+    {% block og_type %}website{% endblock %} {# Минимальный OG для соцсетей #}
+{% else %}
+    {# Публичная страница - полная SEO-разметка #}
+    {% block page_description %}{{ page_description|default:"Информационный сайт choocha.ru"|truncatechars:160}}{% endblock %}
+    {% block og_title %}{{ og_title|default:page_title|truncatechars:65}}{% endblock %}
+    {% block og_description %}{{ og_description|default:page_description|truncatechars:65}}{% endblock %}
+    {% block og_type %}{{ og_type|default:"website" }}{% endblock %}
+{% endif %}
+
+
+{# Основное содержимое страницы #}
 {% block content %}
+    <article class="about-page">
+        <header class="page-header">
+            <h1 class="page-title">{{ article_title }}</h1>
+            <p class="page-subtitle">Учебный проект с промышленным уровнем deployment</p>
+        </header>
 
-    <h1> {{ title }} </h1>
-    <h2>
-        Описание проекта
-    </h2>
-    <p>
-        Данный сайт представляет собой полноценное веб-приложение, разработанное на Django с использованием современных
-        DevOps-практик. Проект реализ как учебный, но с промышленным уровнем deployment.
-    </p>
-    <p>
-        &nbsp;
-    </p>
-    <p style="margin-left:0;">
-        <strong>Технологический стек</strong>:
-    </p>
-    <ul>
-        <li>
-            <p style="margin-left:0px;">
-                <strong>Backend</strong>: Django (Python) с системой аутентификации, ORM и административной панелью
-            </p>
-        </li>
-        <li>
-            <p style="margin-left:0px;">
-                <strong>База данных</strong>: PostgreSQL с регулярными бэкапами
-            </p>
-        </li>
-        <li>
-            <p style="margin-left:0px;">
-                <strong>Инфраструктура</strong>:
-            </p>
-            <ul>
-                <li>
-                    <p style="margin-left:0px;">
-                        Docker-контейнеризация (Docker Compose)
-                    </p>
+        <section class="about-section">
+            <h2 class="section-title">Описание проекта</h2>
+            <div class="section-content">
+                <p>Данный сайт представляет собой полноценное веб-приложение, разработанное на Django с использованием
+                    современных DevOps-практик. Проект реализован как учебный, но с промышленным уровнем
+                    развертывания.</p>
+            </div>
+        </section>
+
+        <section class="about-section">
+            <h2 class="section-title">Технологический стек</h2>
+            <div class="tech-stack">
+                <div class="tech-category">
+                    <h3 class="tech-title">Backend</h3>
+                    <ul class="tech-list">
+                        <li>Django (Python) с системой аутентификации</li>
+                        <li>ORM и административная панель</li>
+                    </ul>
+                </div>
+
+                <div class="tech-category">
+                    <h3 class="tech-title">База данных</h3>
+                    <ul class="tech-list">
+                        <li>PostgreSQL с регулярными бэкапами</li>
+                        <li>Оптимизированные запросы через Django ORM</li>
+                    </ul>
+                </div>
+
+                <div class="tech-category">
+                    <h3 class="tech-title">Инфраструктура</h3>
+                    <ul class="tech-list">
+                        <li>Docker-контейнеризация (Docker Compose)</li>
+                        <li>Nginx как reverse proxy с HTTPS</li>
+                        <li>Fail2ban для защиты от bruteforce-атак</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="about-section">
+            <h2 class="section-title">Особенности реализации</h2>
+            <ul class="feature-list">
+                <li class="feature-item">
+                    <div class="feature-icon">🔒</div>
+                    <div class="feature-content">
+                        <h3>Безопасность</h3>
+                        <p>Защита от DDoS через Nginx rate limiting, валидация всех входящих данных</p>
+                    </div>
                 </li>
-                <li>
-                    <p style="margin-left:0px;">
-                        Nginx как reverse proxy с HTTPS
-                    </p>
+                <li class="feature-item">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-content">
+                        <h3>Производительность</h3>
+                        <p>Оптимизированная работа со статикой (Nginx + Django), кэширование</p>
+                    </div>
                 </li>
-                <li>
-                    <p style="margin-left:0px;">
-                        Fail2ban для защиты от bruteforce-атак
-                    </p>
+                <li class="feature-item">
+                    <div class="feature-icon">🔄</div>
+                    <div class="feature-content">
+                        <h3>Надежность</h3>
+                        <p>Контейнеры настроены на автозапуск при перезагрузке сервера, мониторинг</p>
+                    </div>
                 </li>
             </ul>
-        </li>
-        <li>
-            <p style="margin-left:0px;">
-                <strong>Дополнительные функции</strong>:
-            </p>
-            <ul>
-                <li>
-                    <p style="margin-left:0px;">
-                        Система комментариев с модерацией (пока в режиме тестирования)
-                    </p>
-                </li>
-                <li>
-                    <p style="margin-left:0px;">
-                        Отправка email-уведомлений (регистрация, обратная связь)
-                    </p>
-                </li>
-            </ul>
-        </li>
-    </ul>
-    <p style="margin-left:0;">
-        <strong>Особенности реализации</strong>:
-    </p>
-    <ul>
-        <li>
-            <p style="margin-left:0px;">
-                Автоматическое развертывание через CI/CD (GitHub Actions) (пока в режиме тестирования)
-            </p>
-        </li>
-        <li>
-            <p style="margin-left:0px;">
-                Контейнеры настроены на автозапуск при перезагрузке сервера
-            </p>
-        </li>
-        <li>
-            <p style="margin-left:0px;">
-                Оптимизированная работа со статикой (Nginx + Django)
-            </p>
-        </li>
-        <li>
-            <p style="margin-left:0px;">
-                Защита от DDoS через Nginx rate limiting
-            </p>
-        </li>
-    </ul>
-    <p style="margin-left:0;">
-        <strong>Планы по развитию</strong>:
-    </p>
-    <ul>
-        <li>
-            <p style="margin-left:0px;">
-                Добавление API на DRF (Django REST Framework)
-            </p>
-        </li>
-        <li>
-            <p style="margin-left:0px;">
-                Интеграция Celery для фоновых задач
-            </p>
-        </li>
-        <li>
-            <p style="margin-left:0px;">
-                Реализация полнотекстового поиска
-            </p>
-        </li>
-        <li>
-            <p style="margin-left:0px;">
-                Настройка мониторинга (Prometheus + Grafana)
-            </p>
-        </li>
-    </ul>
+        </section>
 
+        <section class="about-section roadmap">
+            <h2 class="section-title">Планы по развитию</h2>
+            <div class="timeline">
+                <p>Автоматическое развертывание через CI/CD</p>
+                <p>Реализация полнотекстового поиска по контенту с использованием PostgreSQL</p>
+                <p>Асинхронные задачи (Celery в планах)</p>
+            </div>
+        </section>
+        {% comment %}
+    <section class="about-section cta">
+        <h2 class="section-title">Хотите узнать больше?</h2>
+        <p>Посетите наш <a href="https://github.com/your-repo" target="_blank" rel="noopener">GitHub</a> или свяжитесь через <a href="{% url 'contact' %}">форму обратной связи</a>.</p>
+    </section>
+    {% endcomment %}
+
+    </article>
 {% endblock %}

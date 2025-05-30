@@ -38,7 +38,7 @@ class AddPostForm(forms.ModelForm):
         #    'title': 'Заголовок',
         # }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """
         Обновление стилей формы под Bootstrap
         """
@@ -58,7 +58,7 @@ class AddPostForm(forms.ModelForm):
     #         raise forms.ValidationError('Должны присутствовать только русские буквы, цифры, дефис и пробел. V2')
     #     return title
 
-    def clean_content_short(self):
+    def clean_content_short(self) -> str:
         content = self.cleaned_data['content_short']
         print(len(strip_tags(content)))
         print(content)
@@ -77,7 +77,7 @@ class UpdatePostForm(forms.ModelForm):
             'title': forms.TextInput(attrs={'class': 'form-input'}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         for field in self.fields:
             self.fields[field].widget.attrs.update({'class': 'form-control', 'autocomplete': 'off'})
@@ -109,7 +109,7 @@ class ContactForm(forms.Form):
     )
     captcha = CaptchaField()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         user = kwargs.pop('user', None)
         super(ContactForm, self).__init__(*args, **kwargs)
 
@@ -144,7 +144,7 @@ class CommentForm(forms.ModelForm):
             }),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         self.user = kwargs.pop('user', None)  # Передаём пользователя из view
         self.post = kwargs.pop('post', None)  # Передаём пост из view
         super().__init__(*args, **kwargs)

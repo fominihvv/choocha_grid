@@ -1,8 +1,26 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{# Обязательные элементы #}
+{% block page_title %}{{ page_title|default:"choocha.ru" }}{% endblock %}
+{% block canonical_url %}{{ canonical_url }}{% endblock %}
+
+{% if robots %}
+    {# Служебная страница - только минимальная разметка #}
+    {% block robots %}{{ robots }}{% endblock %}
+    {% block og_type %}website{% endblock %} {# Минимальный OG для соцсетей #}
+{% else %}
+    {# Публичная страница - полная SEO-разметка #}
+    {% block page_description %}{{ page_description|default:"Информационный сайт choocha.ru"|truncatechars:160}}{% endblock %}
+    {% block og_title %}{{ og_title|default:page_title|truncatechars:65}}{% endblock %}
+    {% block og_description %}{{ og_description|default:page_description|truncatechars:65}}{% endblock %}
+    {% block og_type %}{{ og_type|default:"website" }}{% endblock %}
+{% endif %}
+
 
 {% block content %}
     <div class="content-container">
-        <h1>Редактирование комментария</h1>
+        <h1>{{ article_title }}</h1>
         <p>К посту: <a href="{{ post.get_absolute_url }}">{{ post.title }}</a></p>
 
         <form method="post">

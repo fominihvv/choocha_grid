@@ -1,26 +1,50 @@
-<!-- choocha\notes\templates\choocha\add_post.html -->
 {% extends 'base.html' %}
+{% load static %}
 
-{% block canonical_url %}
-    <link rel="canonical" href="{% url 'add_post' %}"/>
-{% endblock %}
+{# Обязательные элементы #}
+{% block page_title %}{{ page_title|default:"choocha.ru" }}{% endblock %}
+{% block canonical_url %}{{ canonical_url }}{% endblock %}
 
+{% if robots %}
+    {# Служебная страница - только минимальная разметка #}
+    {% block robots %}{{ robots }}{% endblock %}
+    {% block og_type %}website{% endblock %} {# Минимальный OG для соцсетей #}
+{% else %}
+    {# Публичная страница - полная SEO-разметка #}
+    {% block page_description %}{{ page_description|default:"Информационный сайт choocha.ru"|truncatechars:160}}{% endblock %}
+    {% block og_title %}{{ og_title|default:page_title|truncatechars:65}}{% endblock %}
+    {% block og_description %}{{ og_description|default:page_description|truncatechars:65}}{% endblock %}
+    {% block og_type %}{{ og_type|default:"website" }}{% endblock %}
+{% endif %}
+
+
+{# Основное содержимое страницы #}
 {% block content %}
-    <h1> {{ title }} </h1>
+    <h1> {{ article_title }} </h1>
 
     <form action="" method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        <div class="form-error">{{ form.non_field_errors }}</div>
+
+        {# Общие ошибки формы #}
+        {% if form.non_field_errors %}
+            <div class="form-error">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        {# для CKEditor #}
         {{ form.media }}
 
-        {% for f in form %}
+        {# Поля формы #}
+        {% for field in form %}
 
             <div class="form-field">
-                <label class="form-label" for="{{ f.id_for_label }}">{{ f.label }}</label>
-                {{ f }}
-                <div class="form-error">{{ f.errors }}</div>
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                <div class="form-help-text">{{ field.help_text }}</div>
+                <div class="form-error">{{ field.errors }}</div>
             </div>
         {% endfor %}
+
+        {# Кнопка отправки формы #}
         <button type="submit" class="btn btn-dark">Добавить статью</button>
     </form>
 {% endblock %}

@@ -1,30 +1,44 @@
 {% extends 'base.html' %}
-{% block canonical_url %}
-{% endblock %}
-{% block meta %}
-    <meta name="robots" content="noindex, nofollow">
-{% endblock %}
+
+{# Минимальная SEO-разметка для страниц ошибок #}
+{% block page_title %}Ошибка {% if error_code %}{{ error_code }} | {% endif %}choocha.ru{% endblock %}
+
+{# Обязательно отключаем индексацию #}
+{% block robots %}noindex,nofollow,noarchive,nosnippet{% endblock %}
+
+{# Отключаем каноническую ссылку #}
+{% block canonical_url %}{% endblock %}
+
+{# Отключаем все ненужные мета-теги #}
+{% block page_description %}{% endblock %}
+{% block og_title %}{% endblock %}
+{% block og_description %}{% endblock %}
+{% block og_type %}{% endblock %}
+
+{# Основное содержимое страницы #}
 {% block content %}
-    <div class="content-error">
-        <div class="content-error__wrapper">
-            <div class="epic-error-code">
-                403
-            </div>
-            <div class="epic-error-text">
-
-                Доступ запрещён
-                <p>У вас нет доступа к этой странице</p>
-
-            </div>
-            <div class="epic-link">
-
-
-                Попробуйте перейти на <a href="/">главную страницу</a>
-
-
-            </div>
+<div class="error-container">
+    <div class="error-content">
+        <div class="error-code">403</div>
+        <h1 class="error-title">Доступ запрещён</h1>
+        <p class="error-message">У вас недостаточно прав для просмотра этой страницы</p>
+        
+        <div class="error-actions">
+            <a href="/" class="btn btn-primary">На главную</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'logout' %}" class="btn btn-secondary">Выйти</a>
+            {% else %}
+                <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-secondary">Войти</a>
+            {% endif %}
         </div>
+        
+        {% if request.user.is_staff %}
+        <div class="error-debug">
+            <p>Debug info (visible only for staff):</p>
+            <p>Path: {{ request.path }}</p>
+            <p>User: {{ request.user.username }}</p>
+        </div>
+        {% endif %}
     </div>
-
-
+</div>
 {% endblock %}

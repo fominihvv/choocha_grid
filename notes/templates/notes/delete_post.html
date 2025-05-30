@@ -1,11 +1,29 @@
-<!-- choocha\notes\templates\notes\delete_post.html -->
 {% extends 'base.html' %}
-{% block canonical_url %}
-    <link rel="canonical" href="{% url 'delete_post' post.pk %}"/>
-{% endblock %}
+{% load static %}
+
+{# Обязательные элементы #}
+{% block page_title %}{{ page_title|default:"choocha.ru" }}{% endblock %}
+{% block canonical_url %}{{ canonical_url }}{% endblock %}
+
+{% if robots %}
+    {# Служебная страница - только минимальная разметка #}
+    {% block robots %}{{ robots }}{% endblock %}
+    {% block og_type %}website{% endblock %} {# Минимальный OG для соцсетей #}
+{% else %}
+    {# Публичная страница - полная SEO-разметка #}
+    {% block page_description %}{{ page_description|default:"Информационный сайт choocha.ru"|truncatechars:160}}{% endblock %}
+    {% block og_title %}{{ og_title|default:page_title|truncatechars:65}}{% endblock %}
+    {% block og_description %}{{ og_description|default:page_description|truncatechars:65}}{% endblock %}
+    {% block og_type %}{{ og_type|default:"website" }}{% endblock %}
+{% endif %}
+
+
+{# Основное содержимое страницы #}
 {% block content %}
-    <h1> {{ title }} </h1>
+    <h1> {{ article_title }} </h1>
+
     {% csrf_token %}
+
     <form action="" method="post">
         <p>Вы действительно хотите удалить пост "{{ post.title }}"?</p>
         <div class="comment-actions">
@@ -15,7 +33,5 @@
             <button type="submit" class="btn btn-sm btn-compact-danger">Удалить</button>
         </div>
     </form>
-
-
 
 {% endblock %}

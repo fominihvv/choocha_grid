@@ -1,27 +1,45 @@
-<!-- choocha\notes\templates\notes\contact.html -->
 {% extends 'base.html' %}
-{% block canonical_url %}
-    <link rel="canonical" href="{% url 'contact' %}"/>
-{% endblock %}
+{% load static %}
 
+{# Обязательные элементы #}
+{% block page_title %}{{ page_title|default:"choocha.ru" }}{% endblock %}
+{% block canonical_url %}{{ canonical_url }}{% endblock %}
+
+{% if robots %}
+    {# Служебная страница - только минимальная разметка #}
+    {% block robots %}{{ robots }}{% endblock %}
+    {% block og_type %}website{% endblock %} {# Минимальный OG для соцсетей #}
+{% else %}
+    {# Публичная страница - полная SEO-разметка #}
+    {% block page_description %}{{ page_description|default:"Информационный сайт choocha.ru"|truncatechars:160}}{% endblock %}
+    {% block og_title %}{{ og_title|default:page_title|truncatechars:65}}{% endblock %}
+    {% block og_description %}{{ og_description|default:page_description|truncatechars:65}}{% endblock %}
+    {% block og_type %}{{ og_type|default:"website" }}{% endblock %}
+{% endif %}
+
+
+{# Основное содержимое страницы #}
 {% block content %}
     <div class="article">
-        <h2> {{ page_description }}</h2>
+        <h2> {{ article_title }}</h2>
 
         <form method="post">
             {% csrf_token %}
 
+            {# Общие ошибки формы #}
             <div class="form-error">{{ form.non_field_errors }}</div>
 
-            {% for field in form %}
-                {% if not field.is_hidden %}  <!-- Проверяем, не является ли поле скрытым -->
-                    <div class="form-field">
-                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label> {{ field }}
-                        <div class="form-error">{{ field.errors }}</div>
-                    </div>
-                {% else %}
-                    <div class="hidden-field">{{ field }}</div>
-                {% endif %}
+            {# Поля формы #}
+            {% for field in form.visible_fields %}
+                <div class="form-field">
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label> {{ field }}
+                    <div class="form-error">{{ field.errors }}</div>
+                </div>
+            {% endfor %}
+
+            {# Скрытые поля #}
+            {% for hidden_field in form.hidden_fields %}
+                <div class="hidden-field">{{ hidden_field }}</div>
             {% endfor %}
 
             <button type="submit">Отправить</button>

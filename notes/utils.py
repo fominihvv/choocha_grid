@@ -1,4 +1,5 @@
 import pytz
+from bs4 import BeautifulSoup
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.utils import timezone
@@ -7,17 +8,35 @@ from choocha import settings
 from django.utils.html import escape
 
 
-class DataMixin:
+class PaginationMixin:
+    """
+    Базовый миксин для добавления пагинации в представление
+    """
     extra_context = {}
     paginate_by = 2
 
     @staticmethod
-    def get_mixin_context(context: dict, **kwargs) -> dict:
+    def get_paginator_context(context: dict, **kwargs) -> dict:
         if "paginator" in context and "page_obj" in context:
-            context["page_range"] = context["paginator"].get_elided_page_range(context["page_obj"].number,
-                                                                               on_each_side=2, on_ends=1)
-        context.update({**kwargs})
+            context["page_range"] = context["paginator"].get_elided_page_range(context["page_obj"].number, on_each_side=2, on_ends=1)
         return context
+
+class AddPageDescriptionMixin:
+    """
+    Базовый миксин для добавления дополнительных данных в контекст
+    """
+    @staticmethod
+    def get_post_description(post) -> str:
+        if post.meta_description and post.meta_description.strip():
+            return post.meta_description
+        else:
+            soup = BeautifulSoup(
+                post.content_short, features="html5lib"
+            )
+            clean_text = soup.get_text(
+                strip=True
+            )
+        return clean_text[:160]
 
 def format_additional_data(additional_data, max_length=100) -> str:
     """Безопасное форматирование дополнительных данных"""

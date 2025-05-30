@@ -1,10 +1,24 @@
-<!-- choocha\notes\templates\notes\index.html -->
 {% extends 'base.html' %}
+{% load static %}
 
-{% block canonical_url %}
-    <link rel="canonical" href="{% url 'home' %}"/>
-{% endblock %}
+{# Обязательные элементы #}
+{% block page_title %}{{ page_title|default:"choocha.ru" }}{% endblock %}
+{% block canonical_url %}{{ canonical_url }}{% endblock %}
 
+{% if robots %}
+    {# Служебная страница - только минимальная разметка #}
+    {% block robots %}{{ robots }}{% endblock %}
+    {% block og_type %}website{% endblock %} {# Минимальный OG для соцсетей #}
+{% else %}
+    {# Публичная страница - полная SEO-разметка #}
+    {% block page_description %}{{ page_description|default:"Информационный сайт choocha.ru"|truncatechars:160}}{% endblock %}
+    {% block og_title %}{{ og_title|default:page_title|truncatechars:65}}{% endblock %}
+    {% block og_description %}{{ og_description|default:page_description|truncatechars:65}}{% endblock %}
+    {% block og_type %}{{ og_type|default:"website" }}{% endblock %}
+{% endif %}
+
+
+{# Основное содержимое страницы #}
 {% block content %}
 
     <ul class="list-articles">
@@ -53,6 +67,7 @@
     </ul>
 {% endblock %}
 
+{# Панель пагинации #}
 {% block navigation %}
     {% if page_obj.has_other_pages %}
         <nav class="list-pages">

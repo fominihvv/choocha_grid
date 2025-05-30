@@ -1,11 +1,25 @@
-<!-- choocha\notes\templates\notes\show_post.html -->
 {% extends 'base.html' %}
 {% load static %}
-{% block canonical_url %}
-    <link rel="canonical" href="{% url 'post' post.slug %}"/>
-{% endblock %}
+
+{# Обязательные элементы #}
+{% block page_title %}{{ page_title|default:"choocha.ru" }}{% endblock %}
+{% block canonical_url %}{{ canonical_url }}{% endblock %}
+
+{% if robots %}
+    {# Служебная страница - только минимальная разметка #}
+    {% block robots %}{{ robots }}{% endblock %}
+    {% block og_type %}website{% endblock %} {# Минимальный OG для соцсетей #}
+{% else %}
+    {# Публичная страница - полная SEO-разметка #}
+    {% block page_description %}{{ page_description|default:"Информационный сайт choocha.ru"|truncatechars:160}}{% endblock %}
+    {% block og_title %}{{ og_title|default:page_title|truncatechars:65}}{% endblock %}
+    {% block og_description %}{{ og_description|default:page_description|truncatechars:65}}{% endblock %}
+    {% block og_type %}{{ og_type|default:"website" }}{% endblock %}
+{% endif %}
+
+{# Хлебные крошки и панель инструментов #}
 {% block breadcrumbs %}
-    <!--- Метки --->
+    {# Отображение тегов поста #}
     {% with post.tags.all as tags %}
         {% if tags %}
             <ul class="tags-list">
@@ -17,6 +31,7 @@
         {% endif %}
     {% endwith %}
 
+    {# Панель действий для авторизованных пользователей #}
     <div class="actions">
         {% if perms.notes.change_note %}
             <a href="{{ post.get_update_url }}" title="Изменить статью" class="btn btn-sm btn-compact-blue">Изменить
@@ -30,10 +45,11 @@
     </div>
 {% endblock %}
 
+{# Основное содержимое страницы #}
 {% block content %}
 
     <div class="article">
-        <h1> {{ title }} </h1>
+        <h1> {{ article_title }} </h1>
         {% autoescape off %}
             <div class="ck-content">
                 {{ post.content_full|safe }}
@@ -59,11 +75,11 @@
     <div class="comments-section">
         <h3>Комментарии ({{ post.post_comments.count }})</h3>
 
-        {# Список комментариев #}
+        {# Список активных комментариев #}
         <div class="comments-list">
             {% for comment in post.post_comments.all %}
+                {# Показываем модераторам всё, авторам - активные и свои, остальным только активные #}
                 {% if comment.status == comment.Status.ACTIVE or user.is_staff or user == comment.user %}
-                    {# Показываем модераторам всё, авторам - активные и свои, остальным только активные #}
                     <div class="comment" id="comment-{{ comment.id }}">
 
                         {# Заголовок комментария #}
@@ -84,7 +100,7 @@
                                          height="40"
                                          loading="lazy">
                                 {% endif %}
-                                {{ comment.user.username }} писал
+                                {{ comment.user.username }} написал
                                 {{ comment.created|date:"d-m-Y H:i" }}
                                 {% if comment.created|date:"d-m-Y H:i" != comment.updated|date:"d-m-Y H:i" %}
                                     (изменено: {{ comment.updated|date:"d-m-Y H:i" }})
@@ -102,6 +118,7 @@
 
                         </div>
 
+                        {# Действия над комментарием #}
                         {% if user.is_authenticated %}
                             {# Блок кнопок #}
                             <div class="comment-actions">
@@ -125,7 +142,7 @@
             {% endfor %}
         </div>
 
-        {# Форма добавления комментария #}
+        {# Форма отправки нового комментария #}
         {% if user.is_authenticated %}
             <div class="comment-form">
                 <div class="comment-actions">
