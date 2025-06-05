@@ -18,7 +18,7 @@ class TagSitemap(Sitemap):
     priority = 0.8
 
     def items(self):
-        return TagPost.objects.all().order_by('tag')
+        return TagPost.objects.all().order_by('name')
 
 
 class CategorySitemap(Sitemap):

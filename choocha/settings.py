@@ -55,16 +55,16 @@ INSTALLED_APPS = [
 
 
 MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    # "django.middleware.cache.UpdateCacheMiddleware",
+    "django.middleware.cache.UpdateCacheMiddleware",
     'django.middleware.common.CommonMiddleware',
-    # "django.middleware.cache.FetchFromCacheMiddleware",
+    "django.middleware.cache.FetchFromCacheMiddleware",
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'choocha.urls'
@@ -321,10 +321,50 @@ LOGGING = {
 #     },
 # }
 
-#!!!!!!!!  для докера раскомментировать !!!!!!!!
-# CSRF_TRUSTED_ORIGINS = [
-#     'https://choocha.ru',
-#     'http://choocha.ru',
-#     'https://www.choocha.ru',
-#     'http://www.choocha.ru',
-# ]
+# Настройки кеширования
+REDIS_URL = os.getenv('REDIS_URL', 'redis://:${REDIS_PASSWORD}@redis:6379/0')
+CACHE_MIDDLEWARE_ALIAS = 'default'
+CACHE_MIDDLEWARE_SECONDS = 10
+CACHE_MIDDLEWARE_KEY_PREFIX = 'choocha.ru'
+
+if DEBUG:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",  # Лучше чем Dummy для разработки
+            "LOCATION": "unique-snowflake",
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",  # Явно указываем django-redis
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "PICKLE_VERSION": -1,
+                "SOCKET_CONNECT_TIMEOUT": 5,
+                "SOCKET_TIMEOUT": 5,
+                "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
+                "IGNORE_EXCEPTIONS": not DEBUG,
+                "CONNECTION_POOL_KWARGS": {
+                    "max_connections": 100,
+                    "retry_on_timeout": True,
+                   },
+            },
+            "KEY_PREFIX": "choocha.ru",  # Префикс для всех ключей
+        }
+    }
+
+    # Настройки сессий
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_CACHE_ALIAS = "default"
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    # Настройки CSRF (для Docker)
+    CSRF_TRUSTED_ORIGINS = [
+        'https://choocha.ru',
+        'http://choocha.ru',
+        'https://www.choocha.ru',
+        'http://www.choocha.ru',
+    ]

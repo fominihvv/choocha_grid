@@ -60,8 +60,6 @@ class AddPostForm(forms.ModelForm):
 
     def clean_content_short(self) -> str:
         content = self.cleaned_data['content_short']
-        print(len(strip_tags(content)))
-        print(content)
         if content and len(strip_tags(content)) > 600:
             raise forms.ValidationError("Превышен лимит в 600 символов")
         return content

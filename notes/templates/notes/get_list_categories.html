@@ -1,5 +1,5 @@
 <!-- choocha\notes\templates\notes\get_list_categories.html -->
-{% for cat in cats %}
+{% for cat in all_categories %}
     {% if cat_selected == cat.pk %}
         <li class="selected">{{ cat.name }}</li>
     {% else %}

@@ -1,19 +1,21 @@
 from typing import Any
 
-
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin, UserPassesTestMixin
-from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from django.http import HttpResponseRedirect, HttpResponse, HttpRequest
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
+from django.utils.html import escape
 from django.views import View
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, DeleteView, UpdateView, FormView
+from redis import RedisError
+
 from .forms import AddPostForm, UpdatePostForm, ContactForm, CommentForm
 from .models import Note, TagPost, Category, Comment
-from .utils import PaginationMixin, send_notification_email, AddPageDescriptionMixin
+from django.core.cache import cache
+from .mixins import ObjectOwnershipMixin, CommentMixin,PaginationMixin, send_notification_email, AddPageDescriptionMixin
 
 
 ###################################
@@ -21,60 +23,86 @@ from .utils import PaginationMixin, send_notification_email, AddPageDescriptionM
 ###################################
 
 class IndexView(PaginationMixin, ListView):
+    """
+    Отображение основной страницы
+    """
     template_name = "notes/index.html"
     context_object_name = "posts"
     paginate_by = 5
 
     def get_queryset(self) -> QuerySet:
-        return Note.published.all().select_related("cat", "author")
+        return (
+            Note.published.all()
+            .select_related(
+                "cat", "author"
+            )
+        )
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context["page_title"] = "choocha.ru | Главная страница проекта"
-        context["page_description"] = "choocha.ru | Главная страница проекта. Все статьи."
-        context["cat_selected"] = 0
-        context["content_type"] = 'website'
-        context["canonical_url"] = self.request.build_absolute_uri(reverse('home'))
-        context["og_title"] = context["page_title"]
-        context["og_description"] = context["page_description"]
-        context["og_type"] = context["content_type"]
+        context.update({
+            "page_title": "Choocha.ru | Главная страница проекта",
+            "page_description": "Choocha.ru | Главная страница проекта. Все статьи.",
+            "cat_selected": 0,
+            "content_type": 'website',
+            "canonical_url": self.request.build_absolute_uri(reverse('home')),
+        })
+        context.update({
+            "og_title": context["page_title"],
+            "og_description": context["page_description"],
+            "og_type": context["content_type"],
+        })
         return self.get_paginator_context(context)
 
 
 class AboutView(TemplateView):
+    """
+    Отображение страницы о проекте
+    """
     template_name = "notes/about.html"
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context["page_title"] = "О сайте. Контакты. Ссылки."
-        context["page_description"] = (
+        context.update({
+            "page_title": "Choocha.ru | О сайте",
+            "page_description": (
             "Данный сайт представляет собой полноценное веб-приложение, разработанное на Django"
             " с использованием современных DevOps-практик. Проект реализован как учебный, "
-            "но с промышленным уровнем развертывания.")
-        context["article_title"] = "О сайте"
-        context["content_type"] = 'webpage'
-        context["canonical_url"] = self.request.build_absolute_uri(reverse('about'))
-        context["og_title"] = context["page_title"]
-        context["og_description"] = context["page_description"]
-        context["og_type"] = context["content_type"]
+            "но с промышленным уровнем развертывания."),
+            "article_title": "О сайте",
+            "content_type": 'webpage',
+            "canonical_url": self.request.build_absolute_uri(reverse('about')),
+        })
+        context.update({
+            "og_title": context["page_title"],
+            "og_description": context["page_description"],
+            "og_type": context["content_type"],
+        })
         return context
 
 
 class ContactView(FormView):
+    """
+    Отображение страницы обратной связи
+    """
     form_class = ContactForm
     success_url = reverse_lazy("home")
     template_name = "notes/contact.html"
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context["page_title"] = "Обратная связь"
-        context["page_description"] = "Обратная связь"
-        context["article_title"] = "Обратная связь"
-        context["content_type"] = 'webpage'
-        context["canonical_url"] = self.request.build_absolute_uri(reverse('contact'))
-        context["og_title"] = context["page_title"]
-        context["og_description"] = context["page_description"]
-        context["og_type"] = context["content_type"]
+        context.update({
+            "page_title": "Choocha.ru | Обратная связь",
+            "page_description": "Choocha.ru | Обратная связь",
+            "article_title": "Обратная связь",
+            "content_type": 'webpage',
+            "canonical_url": self.request.build_absolute_uri(reverse('contact')),
+        })
+        context.update({
+            "og_title": context["page_title"],
+            "og_description": context["page_description"],
+            "og_type": context["content_type"],
+        })
         return context
 
     def form_valid(self, form: ContactForm) -> HttpResponse:
@@ -123,11 +151,10 @@ class ContactView(FormView):
 ###############################
 # Блок для работы со статьями #
 ###############################
-
-
 class ShowPost(AddPageDescriptionMixin, DetailView):
-    """Отображение статьи"""
-
+    """
+    Отображение статьи
+    """
     # model = Notes #Не использовать этот способ, если определен get_queryset
     template_name = "notes/show_post.html"
     slug_url_kwarg = "post_slug"
@@ -149,31 +176,60 @@ class ShowPost(AddPageDescriptionMixin, DetailView):
         context = super().get_context_data(**kwargs)
 
         post = context["post"]  # получаем пост из контекста
-        context["page_title"] = f"Choocha.ru | {post.title.strip()}" if post.title else "Choocha.ru | Статья без названия"
-        context["page_description"] = f"Просмотр статьи: {self.get_post_description(post)}"
-        context["article_title"] = post.title.strip() if post.title else "Статья без названия"
-        context["comment_form"] = CommentForm()
-        context["content_type"] = 'article'
-        context["canonical_url"] = post.get_absolute_url()
-        context["og_title"] = context["page_title"]
-        context["og_description"] = context["page_description"]
-        context["og_type"] = context["content_type"]
+        escaped_post_title = escape(post.title.strip())
+
+        context.update({
+            "page_title": f"Choocha.ru | {escaped_post_title}" if post.title else "Choocha.ru | Статья без названия",
+            "page_description": f"Просмотр статьи: {self.get_post_description(post)}",
+            "article_title": escaped_post_title if post.title else "Статья без названия",
+            "comment_form": CommentForm(),
+            "content_type": 'article',
+            "canonical_url": post.get_absolute_url(),
+        })
+        context.update({
+            "og_title": context["page_title"],
+            "og_description": context["page_description"],
+            "og_type": context["content_type"],
+        })
         return context
 
 
 class ShowPostByCategory(PaginationMixin, ListView):
-    """Вывод статей по определённой категории"""
+    """
+    Вывод статей соответствующих указанной категории
+    """
 
     template_name = "notes/index.html"
     context_object_name = "posts"
     paginate_by = 5
 
     def get_queryset(self) -> QuerySet:
-        return Note.published.filter(cat__slug=self.kwargs["cat_slug"]).select_related(
-            "cat", "author"
-        )
+        """
+        Возвращает список статей, соответствующих указанной категории.
+        Данные сохраняются в Redis-кеше на один час.
+        """
+        try:
+            return cache.get_or_set(
+                f"notes:cat:{self.kwargs['cat_slug']}",
+                lambda: Note.published.filter(cat__slug=self.kwargs["cat_slug"])
+                .select_related(
+                    "cat", "author"
+                ),
+                60 * 60 # Хранить в кеше 1 час
+            )
+        except RedisError:
+            return (
+                Note.published.filter(cat__slug=self.kwargs["cat_slug"])
+                .select_related(
+                    "cat", "author"
+                )
+            )
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
+        """
+        Формирует контекст страницы с информацией о статье и категории.
+        Проверяет наличие корректного slugs и производит переход, если обнаружено несоответствие.
+        """
         context = super().get_context_data(**kwargs)
         slug = self.kwargs["cat_slug"]
         category = get_object_or_404(Category, slug=slug)
@@ -182,47 +238,77 @@ class ShowPostByCategory(PaginationMixin, ListView):
         if category.slug != slug:
             return redirect('category', cat_slug=category.slug, permanent=True)
 
-        context["page_title"] = "choocha.ru | Главная страница проекта"
-        context["page_description"] = f"choocha.ru | Все статьи из категории {category.name}"
-        context["article_title"] = f"Все статьи из категории {category.name}"
-        context["cat_selected"] = category.pk
-        context["content_type"] = 'website'
-        context['canonical_url'] = self.request.build_absolute_uri(category.get_absolute_url())
-        context["og_title"] = context["page_title"]
-        context["og_description"] = context["page_description"]
-        context["og_type"] = context["content_type"]
+        # Формирование динамического контекста страницы
+        context.update({
+            "page_title": f"Choocha.ru | Статьи из категории {category.name}",
+            "page_description": f"Все статьи из категории {category.name}",
+            "article_title": f"Статьи из категории {category.name}",
+            "content_type": "website",
+            "canonical_url": self.request.build_absolute_uri(category.get_absolute_url()),
+        })
+        context.update({
+            "og_title": context["page_title"],
+            "og_description": context["page_description"],
+            "og_type": context["content_type"],
+        })
         return self.get_paginator_context(context)
 
 
 class ShowPostByTag(PaginationMixin, ListView):
-    """Вывод статей по определённому тэгу"""
+    """
+    Вывод статей соответствующих определённому тегу
+    """
 
     template_name = "notes/index.html"
     context_object_name = "posts"
     paginate_by = 5
 
     def get_queryset(self) -> QuerySet:
-        return Note.published.filter(tags__slug=self.kwargs["tag_slug"]).select_related(
-            "cat", "author"
-        )
+        """
+        Возвращает список статей, соответствующих указанному тегу.
+        Данные сохраняются в Redis-кеше на один час.
+        """
+        try:
+            return cache.get_or_set(
+                f"notes:tag:{self.kwargs['tag_slug']}",
+                lambda: Note.published.filter(tags__slug=self.kwargs["tag_slug"])
+                .select_related("cat", "author")
+                .prefetch_related("tags"),
+                60 * 60  # Хранить в кеше 1 час
+            )
+        except RedisError:
+            return (
+                Note.published.filter(tags__slug=self.kwargs["tag_slug"])
+                .select_related("cat", "author")
+                .prefetch_related("tags")
+            )
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
+        """
+        Формирует контекст страницы с информацией о статье и теге.
+        Проверяет наличие корректного slugs и производит переход, если обнаружено несоответствие.
+        """
         context = super().get_context_data(**kwargs)
         slug = self.kwargs["tag_slug"]
         tag = get_object_or_404(TagPost, slug=slug)
 
-        # Если slug в URL не совпадает с текущим slug категории (например, после переименования)
+        # Проверка корректности slug в URL
         if tag.slug != slug:
             return redirect('category', cat_slug=tag.slug, permanent=True)
 
-        context["page_title"] = "choocha.ru | Главная страница проекта"
-        context["page_description"] = f"choocha.ru | Все статьи с меткой {tag.tag}"
-        context["article_title"] = f"Все статьи с меткой {tag.tag}"
-        context["content_type"] = 'website'
-        context['canonical_url'] = self.request.build_absolute_uri(tag.get_absolute_url())
-        context["og_title"] = context["page_title"]
-        context["og_description"] = context["page_description"]
-        context["og_type"] = context["content_type"]
+        # Формирование динамического контекста страницы
+        context.update({
+            "page_title": f"Choocha.ru | Статьи с меткой {tag.name}",
+            "page_description": f"Все статьи с меткой {tag.name}",
+            "article_title": f"Статьи с меткой {tag.name}",
+            "content_type": "website",
+            "canonical_url": self.request.build_absolute_uri(tag.get_absolute_url()),
+        })
+        context.update({
+            "og_title": context["page_title"],
+            "og_description": context["page_description"],
+            "og_type": context["content_type"],
+        })
         return self.get_paginator_context(context)
 
 
@@ -235,10 +321,12 @@ class AddPost(PermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["page_title"] = "choocha.ru | Добавление новой статьи"
-        context["article_title"] = "Добавление статьи"
-        context["robots"] = 'noindex,nofollow'
-        context["canonical_url"] = self.request.build_absolute_uri(reverse('add_post'))
+        context.update({
+            "page_title": "Choocha.ru | Добавление новой статьи",
+            "page_description": "Choocha.ru | Добавление новой статьи",
+            "article_title": "Добавление статьи",
+            "robots": 'noindex,nofollow',
+        })
         return context
 
     def form_valid(self, form: AddPostForm) -> HttpResponse:
@@ -247,7 +335,7 @@ class AddPost(PermissionRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class DeletePost(PermissionRequiredMixin, DeleteView):
+class DeletePost(ObjectOwnershipMixin, PermissionRequiredMixin, DeleteView):
     model = Note
     template_name = "notes/delete_post.html"
     context_object_name = "post"
@@ -257,110 +345,48 @@ class DeletePost(PermissionRequiredMixin, DeleteView):
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        post = context["post"]
-        context["page_title"] = f"choocha.ru | Удаление статьи {post.title.strip()}"
-        context["article_title"] = "Удаление статьи"
-        context["robots"] = 'noindex,nofollow'
-        context["canonical_url"] = self.request.build_absolute_uri(
-            reverse('delete_post', kwargs={'pk': self.get_object().pk})
-        )
+        escaped_title = escape(self.object.title.strip())
+        context.update({
+            "page_title": f"Choocha.ru | Удаление статьи {escaped_title[:50]}…",
+            "page_description": f"Удаление статьи {escaped_title[:100]}…",
+            "article_title": "Удаление статьи",
+            "robots": 'noindex,nofollow',
+        })
         return context
 
-    def get_object(self, queryset: QuerySet = None) -> object:
-        obj = super().get_object(queryset)
-        if (
-                obj.author == self.request.user
-                or self.request.user.is_superuser
-                or self.request.user.is_staff
-        ):
-            return obj
-        else:
-            raise PermissionDenied("У вас нет прав на удаление статьи")
 
 
-class UpdatePost(PermissionRequiredMixin, UpdateView):
+class UpdatePost(ObjectOwnershipMixin, PermissionRequiredMixin, UpdateView):
+    model = Note
     template_name = "notes/update_post.html"
     form_class = UpdatePostForm
-    success_url = reverse_lazy(
-        "home"
-    )  # Если не указывать, то идёт редирект на саму статью используя get_absolute_url
+    # Если не указывать, то идёт редирект на саму статью используя get_absolute_url
+    # success_url = reverse_lazy("home")
     login_url = reverse_lazy("users:login")
     permission_required = ("notes.change_note",)
     context_object_name = "post"
-
-    def get_queryset(self) -> QuerySet:
-        if self.request.user.is_superuser or self.request.user.is_staff:
-            return Note.objects.all()  # Администраторы видят все статьи
-        return Note.objects.filter(author=self.request.user)
 
     def form_valid(self, form: UpdatePostForm) -> HttpResponse:
         post = form.save(commit=False)
         post.author = self.request.user
         return super().form_valid(form)
 
-    def get_object(self, queryset: QuerySet=None) -> object:
-        obj = super().get_object(queryset)
-        if (
-                obj.author == self.request.user
-                or self.request.user.is_superuser
-                or self.request.user.is_staff
-        ):
-            return obj
-        else:
-            raise PermissionDenied("У вас нет прав на редактирование статьи")
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-
-        post = context["post"]  # получаем пост из контекста
-        context["page_title"] = f"choocha.ru | Редактирование статьи: {post.title.strip()}"
-        context["article_title"] = "Редактирование статьи"
-        context["robots"] = 'noindex,nofollow'
-        context["canonical_url"] = self.request.build_absolute_uri(
-            reverse('update_post', kwargs={'pk': post.pk})
-        )
+        escaped_title = escape(self.object.title.strip())
+        context.update({
+            "page_title": f"Choocha.ru | Редактирование статьи {escaped_title[:50]}…",
+            "page_description": f"Редактирование статьи {escaped_title[:100]}…",
+            "article_title": "Редактирование статьи",
+            "robots": 'noindex,nofollow',
+        })
         return context
 
 
 ###################################
 # Блок для работы с комментариями #
 ###################################
-
-
-class CommentMixin:
-    """Общая логика для работы с комментариями"""
-
-    def _get_comment_notification_context(self, form: CommentForm, action: str) -> dict[str, Any]:
-        """Формирование контекста для уведомлений"""
-        return {
-            "subject": f"Комментарий {action}",
-            "message": f"""
-            Комментарий {action}
-
-            Автор: {form.instance.user.username or '-'}
-            Пост: {form.instance.post.title}
-            Текст: {form.cleaned_data['body'][:200]}{'...' if len(form.cleaned_data['body']) > 200 else ''}
-            """,
-            "additional": {
-                "post_url": self.request.build_absolute_uri(
-                    reverse("post", kwargs={"post_slug": form.instance.post.slug})
-                ),
-                "full_text": form.cleaned_data["body"],
-            },
-        }
-
-    @staticmethod
-    def _handle_comment_status(form: CommentForm, request: HttpRequest) -> bool:
-        """Обработка статуса комментария"""
-        is_admin = request.user.is_staff or request.user.is_superuser
-        if is_admin:
-            form.instance.status = Comment.Status.ACTIVE
-        messages.success(
-            request,
-            f'Комментарий {"добавлен" if is_admin else "отправлен на модерацию"}',
-        )
-        return is_admin
-
 
 class AddCommentView(LoginRequiredMixin, CommentMixin, CreateView):
     model = Comment
@@ -405,7 +431,7 @@ class ApproveComment(LoginRequiredMixin, UserPassesTestMixin, View):
         )
 
 
-class DeleteComment(LoginRequiredMixin, DeleteView):
+class DeleteComment(ObjectOwnershipMixin, LoginRequiredMixin, DeleteView):
     model = Comment
     template_name = "notes/delete_comment.html"
     context_object_name = "comment"
@@ -413,30 +439,21 @@ class DeleteComment(LoginRequiredMixin, DeleteView):
     def get_success_url(self) -> str:
         return reverse_lazy("post", kwargs={"post_slug": self.object.post.slug})
 
-    def get_object(self, queryset: QuerySet=None) -> QuerySet:
-        obj = super().get_object(queryset)
-        # Проверяем права: автор, модератор или суперпользователь
-        if (
-                obj.user == self.request.user
-                or self.request.user.is_staff
-                or self.request.user.is_superuser
-        ):
-            return obj
-        raise PermissionDenied("У вас нет прав на удаление этого комментария")
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context["post"] = self.object.post
-        context["page_title"] = "choocha.ru | Удаление комментария"
-        context["article_title"] = "Удаление комментария"
-        context["robots"] = 'noindex,nofollow'
-        context["canonical_url"] = self.request.build_absolute_uri(
-            reverse('delete_comment', kwargs={'pk': self.object.pk})
-        )
+        escaped_text = escape(self.object.text.strip())
+        context.update({
+            "post": self.object.post,
+            "page_title": f"Choocha.ru | Удаление комментария {escaped_text[:50]}…",
+            "page_description": f"Удаление комментария {escaped_text[:100]}…",
+            "article_title": "Удаление комментария",
+            "robots": 'noindex,nofollow',
+        })
         return context
 
 
-class EditComment(LoginRequiredMixin, CommentMixin, UpdateView):
+class EditComment(ObjectOwnershipMixin, LoginRequiredMixin, CommentMixin, UpdateView):
     model = Comment
     form_class = CommentForm  # Указываем форму для редактирования
     template_name = "notes/edit_comment.html"
@@ -449,17 +466,6 @@ class EditComment(LoginRequiredMixin, CommentMixin, UpdateView):
                 + f"#comment-{self.object.id}"
         )
 
-    def get_object(self, queryset: QuerySet=None) -> QuerySet:
-        obj = super().get_object(queryset)
-        # Проверяем права: автор, модератор или суперпользователь
-        if (
-                obj.user == self.request.user
-                or self.request.user.is_staff
-                or self.request.user.is_superuser
-        ):
-            return obj
-
-        raise PermissionDenied("У вас нет прав на редактирование этого комментария")
 
     def form_valid(self, form: CommentForm) -> HttpResponse:
         # Автоматически обновляем дату редактирования
@@ -476,11 +482,12 @@ class EditComment(LoginRequiredMixin, CommentMixin, UpdateView):
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context["post"] = self.object.post
-        context["page_title"] = "choocha.ru | Редактирование комментария"
-        context["article_title"] = "Редактирование комментария"
-        context["robots"] = 'noindex,nofollow'
-        context["canonical_url"] = self.request.build_absolute_uri(
-            reverse('edit_comment', kwargs={'pk': self.object.pk})
-        )
+        escaped_text = escape(self.object.text.strip())
+        context.update({
+            "post": self.object.post,
+            "page_title": f"Choocha.ru | Редактирование комментария {escaped_text[:50]}…",
+            "page_description": f"Редактирование комментария {escaped_text[:100]}…",
+            "article_title": "Редактирование комментария",
+            "robots": 'noindex,nofollow',
+        })
         return context

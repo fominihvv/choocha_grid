@@ -1,5 +1,5 @@
 <!-- choocha\notes\templates\notes\get_last_articles.html -->
-{% for post in posts %}
+{% for post in last_posts %}
     <li>
         <a href="{{ post.get_absolute_url }}"
             title="Перейти к статье «{{ post.title|escape }}»">

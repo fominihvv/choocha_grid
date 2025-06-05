@@ -10,7 +10,7 @@ from django.views.generic import CreateView, UpdateView
 from social_core.utils import first
 
 from choocha import settings
-from notes.utils import send_notification_email
+from notes.mixins import send_notification_email
 from users.forms import LoginUserForm, RegisterUserForm, ProfileUserForm, UserPasswordChangeForm
 
 

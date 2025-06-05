@@ -24,7 +24,7 @@
             <ul class="tags-list">
                 {% for tag in tags %}
                     <li><a href="{{ tag.get_absolute_url }}"
-                           title="Перейти к метке «{{ tag.tag|escape }}»">{{ tag.tag }}</a></li>
+                           title="Перейти к метке «{{ tag.name|escape }}»">{{ tag.name }}</a></li>
                 {% endfor %}
             </ul>
         {% endif %}

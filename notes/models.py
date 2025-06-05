@@ -11,8 +11,8 @@ class PublishedManager(models.Manager):
     def get_queryset(self) -> QuerySet:
         return super().get_queryset().filter(status=Note.Status.PUBLISHED)
 
-    def get_latest(self) -> QuerySet:
-        return self.get_queryset().order_by('-time_update')
+    def get_latest(self, limit: int = 5) -> QuerySet:
+        return self.get_queryset().order_by('-time_update')[:limit]
 
 
 class TagPost(models.Model):
@@ -20,9 +20,9 @@ class TagPost(models.Model):
         verbose_name = 'Метка'
         verbose_name_plural = 'Метки'
 
-    tag = models.CharField(max_length=100, db_index=True)
+    name = models.CharField(max_length=100, db_index=True)
     slug = AutoSlugField(
-        populate_from='tag',
+        populate_from='name',
         slugify_function=slugify,
         max_length=255,
         unique=True,
@@ -31,7 +31,7 @@ class TagPost(models.Model):
     )
 
     def __str__(self) -> str:
-        return self.tag
+        return self.name
 
     def get_absolute_url(self) -> str:
         return reverse('tag', kwargs={'tag_slug': self.slug})

@@ -1,11 +1,11 @@
 <!-- choocha\notes\templates\notes\list_tags.html -->
-{% if tags %}
+{% if all_tags %}
     <ul class="tags-list">
-        {% for tag in tags %}
+        {% for tag in all_tags %}
             <li>
                 <a href="{{ tag.get_absolute_url }}"
-                   title="Перейти к метке «{{ tag.tag|escape }}»">
-                   {{ tag.tag }}
+                   title="Перейти к метке «{{ tag.name|escape }}»">
+                   {{ tag.name }}
                 </a>
             </li>
         {% endfor %}

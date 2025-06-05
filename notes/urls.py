@@ -1,12 +1,12 @@
 from django.urls import path
-
+from django.views.decorators.cache import cache_page
 from . import views
 
 urlpatterns = [
     path('', views.IndexView.as_view(), name='home'),
-    path('about/', views.AboutView.as_view(), name='about'),
+    path('about/', cache_page(86400)(views.AboutView.as_view()), name='about'),
     path('addpost/', views.AddPost.as_view(), name='add_post'),
-    path('contact/', views.ContactView.as_view(), name='contact'),
+    path('contact/', cache_page(43200)(views.ContactView.as_view()), name='contact'),
     path('post/<slug:post_slug>/', views.ShowPost.as_view(), name='post'),
     path('post/<slug:post_slug>/comment/', views.AddCommentView.as_view(), name='add_comment'),
     path('category/<slug:cat_slug>/', views.ShowPostByCategory.as_view(), name='category'),
@@ -17,3 +17,5 @@ urlpatterns = [
     path('comments/<int:pk>/edit/', views.EditComment.as_view(), name='edit_comment'),
     path('comments/<int:pk>/delete/', views.DeleteComment.as_view(), name='delete_comment'),
 ]
+
+
