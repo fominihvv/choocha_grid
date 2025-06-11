@@ -1,9 +1,9 @@
+from django_ckeditor_5.fields import CKEditor5Field
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import QuerySet
-from django.shortcuts import reverse
-from django_ckeditor_5.fields import CKEditor5Field
 from django_extensions.db.fields import AutoSlugField
+from django.shortcuts import reverse
 from slugify import slugify
 
 
@@ -16,10 +16,6 @@ class PublishedManager(models.Manager):
 
 
 class TagPost(models.Model):
-    class Meta:
-        verbose_name = 'Метка'
-        verbose_name_plural = 'Метки'
-
     name = models.CharField(max_length=100, db_index=True)
     slug = AutoSlugField(
         populate_from='name',
@@ -30,6 +26,10 @@ class TagPost(models.Model):
         verbose_name='Слаг'
     )
 
+    class Meta:
+        verbose_name = 'Метка'
+        verbose_name_plural = 'Метки'
+
     def __str__(self) -> str:
         return self.name
 
@@ -38,10 +38,6 @@ class TagPost(models.Model):
 
 
 class Category(models.Model):
-    class Meta:
-        verbose_name = 'Категория'
-        verbose_name_plural = 'Категории'
-
     name = models.CharField(max_length=100, db_index=True, verbose_name='Категория')
     slug = AutoSlugField(
         populate_from='name',
@@ -52,6 +48,10 @@ class Category(models.Model):
         verbose_name='Слаг'
     )
 
+    class Meta:
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
+
     def __str__(self) -> str:
         return self.name
 
@@ -60,14 +60,6 @@ class Category(models.Model):
 
 
 class Note(models.Model):
-    class Meta:
-        verbose_name = 'Статья'
-        verbose_name_plural = 'Статьи'
-        ordering = ['-time_update', 'title', ]
-        indexes = [
-            models.Index(fields=['-time_update', 'title', ]),
-        ]
-
     class Status(models.IntegerChoices):
         DRAFT = 0, 'Черновик'
         PUBLISHED = 1, 'Опубликовано'
@@ -127,6 +119,19 @@ class Note(models.Model):
     objects = models.Manager()
     published = PublishedManager()
 
+    class Meta:
+        verbose_name = 'Статья'
+        verbose_name_plural = 'Статьи'
+        ordering = ('-time_update', 'title', )
+        indexes = (
+            models.Index(
+                fields=(
+                    '-time_update',
+                    'title',
+                )
+            ),
+        )
+
     def __str__(self) -> str:
         return self.title
 
@@ -145,11 +150,6 @@ class UploadFiles(models.Model):
 
 
 class Comment(models.Model):
-    class Meta:
-        ordering = ('created',)
-        verbose_name = 'Комментарий'
-        verbose_name_plural = 'Комментарии'
-
     class Status(models.IntegerChoices):
         ACTIVE = 0, "Опубликован"
         ON_MODERATE = 1, "На модерации"
@@ -174,6 +174,11 @@ class Comment(models.Model):
         default=Status.ON_MODERATE,
         verbose_name='Статус комментария',
     )
+
+    class Meta:
+        ordering = ('created',)
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
 
     def __str__(self) -> str:
         username = getattr(self.user, 'username', 'Аноним')
